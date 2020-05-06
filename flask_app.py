@@ -29,7 +29,7 @@ def lookup_usda(upc_string):
         upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
 #        print(f'Found latest FDC entry: {upc_name["fdc_id"]}')
         upc_brand = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})["brand_owner"]
-        basic_info = {"source": "usda", "result": {"code": upc_string, "product_name": f'{upc_brand} {upc_name["description"]}'}}
+        basic_info = {"source": "USDA", "result": {"code": upc_string, "product_name": f'{upc_brand} {upc_name["description"]}'}}
         return jsonify(basic_info)
 #    abort(404)
     return jsonify({"source": "USDA", "result": {"error": "Entry not found", "upc": upc_string}}), 404
@@ -48,6 +48,7 @@ def lookup_off(upc_string):
 @app.route('/lookup/<upc_string>', methods=['GET'])
 def lookup(upc_string):
     results = {"results": [lookup_off(upc_string), lookup_usda(upc_string), lookup_uhtt(upc_string)]}
+    print(results)
     return results
 
 if __name__ == "__main__":
