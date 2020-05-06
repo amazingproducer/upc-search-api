@@ -47,7 +47,7 @@ def lookup_off(upc_string):
 
 @app.route('/lookup/<upc_string>', methods=['GET'])
 def lookup(upc_string):
-    results = {"results": [lookup_off(upc_string).get_json(), lookup_usda(upc_string).get_json(), lookup_uhtt(upc_string).get_json()]}
+    results = {"results": [lookup_off(upc_string)[0], lookup_usda(upc_string)[0], lookup_uhtt(upc_string)[0]]}
     print(results)
     return results
 
