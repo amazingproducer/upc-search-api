@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.8
 
 from flask_pymongo import PyMongo
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 app = Flask("__name__")
 #app.config["MONGO_DBNAME"] = "test"
 app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
@@ -27,7 +27,7 @@ def lookup_usda(upc_string):
         print(f"Found name of latest FDC entry: {upc_name}")
         basic_info = {"code": upc_string, "product_name": upc_name["description"]}
         return jsonify(basic_info)
-    return 404
+    abort(404)
 
 @app.route('/off/<upc_string>', methods=['GET'])
 def lookup_off(upc_string):
