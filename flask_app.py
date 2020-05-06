@@ -23,7 +23,7 @@ def lookup_usda(upc_string):
     for i in upc_results:
         fcc_ids.append(i["fdc_id"])
     print(f"Found multiple FDC entries for requested UPC: {fdc_ids}")
-    upc_name = mongo.db.usda_name.find({"fdc_id": {$in: fdc_ids}}).sort([("publication_date", -1)])[0]
+    upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
     print(f"Found name of latest FDC entry: {upc_name["description"]}")
 #    upc_name = mongo.db.usda_name.find_one_or_404({"fdc_id": upc_info["fdc_id"]})
 #    print(type(product_info))
