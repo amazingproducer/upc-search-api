@@ -20,14 +20,14 @@ def lookup_usda(upc_string):
 #    upc_info = mongo.db.usda_upc.find({"gtin_upc": int(upc_string)}).sort([("available_date",-1)])[0]
     upc_results = mongo.db.usda_upc.find({"gtin_upc": int(upc_string)})
     fdc_ids = []
-    for i in upc_results:
-        fdc_ids.append(i["fdc_id"])
-    upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
-    print(f"Found name of latest FDC entry: {upc_name}")
-#    upc_name = mongo.db.usda_name.find_one_or_404({"fdc_id": upc_info["fdc_id"]})
-#    print(type(product_info))
-    basic_info = {"code": upc_string, "product_name": upc_name["description"]}
-    return jsonify(basic_info)
+    if len(fdc_ids) > 0:
+        for i in upc_results:
+            fdc_ids.append(i["fdc_id"])
+        upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
+        print(f"Found name of latest FDC entry: {upc_name}")
+        basic_info = {"code": upc_string, "product_name": upc_name["description"]}
+        return jsonify(basic_info)
+    return 404
 
 @app.route('/off/<upc_string>', methods=['GET'])
 def lookup_off(upc_string):
