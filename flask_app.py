@@ -4,6 +4,7 @@ from flask_pymongo import PyMongo
 from flask import Flask, request, jsonify, abort
 app = Flask("__name__")
 #app.config["MONGO_DBNAME"] = "test"
+app.config['JSON_SORT_KEYS'] = False #Because ordered data is pretty data too
 app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
 mongo = PyMongo(app)
 
