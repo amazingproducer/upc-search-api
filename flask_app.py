@@ -48,7 +48,7 @@ def lookup_off(upc_string):
 @app.route('/lookup/<upc_string>', methods=['GET'])
 def lookup(upc_string):
     results = {"results": [lookup_off(upc_string), lookup_usda(upc_string), lookup_uhtt(upc_string)]}
-    return jsonify(results)
+    return results
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port="5555")
