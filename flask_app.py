@@ -11,9 +11,9 @@ mongo = PyMongo(app)
 @app.route('/uhtt/<upc_string>', methods=['GET'])
 def lookup_uhtt(upc_string):
     print(f"UPC REQUESTED FROM UHTT: {upc_string}")
-    upc_info = mongo.db.uhtt.find_one_or_404({"UPCEAN": int(upc_string)})
+    upc_info = mongo.db.uhtt.find_one({"UPCEAN": int(upc_string)})
     if upc_info:
-        basic_info = {"source": "UHTT", "result": {"code": upc_info["UPCEAN"], "product_name": upc_info["Name"]}
+        basic_info = {"source": "UHTT", "result": {"code": upc_info["UPCEAN"], "product_name": upc_info["Name"]}}
         return jsonify(basic_info)
     return jsonify({"source": "UHTT", "result": {"error": "Entry not found", "upc": upc_string}}), 404
 
