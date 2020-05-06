@@ -13,7 +13,7 @@ def lookup_uhtt(upc_string):
     print(f"UPC REQUESTED FROM UHTT: {upc_string}")
     upc_info = mongo.db.uhtt.find_one({"UPCEAN": int(upc_string)})
     if upc_info:
-        basic_info = {"source": "UHTT", "result": {"code": upc_info["UPCEAN"], "product_name": upc_info["Name"]}}
+        basic_info = {"source": "UHTT", "result": {"code": upc_string, "product_name": upc_info["Name"]}}
         return jsonify(basic_info)
     return jsonify({"source": "UHTT", "result": {"error": "Entry not found", "upc": upc_string}}), 404
 
@@ -27,7 +27,7 @@ def lookup_usda(upc_string):
         fdc_ids.append(i["fdc_id"])
     if len(fdc_ids) > 0:
         upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
-        print(f'Found latest FDC entry: {upc_name["fdc_id"]}')
+#        print(f'Found latest FDC entry: {upc_name["fdc_id"]}')
         upc_brand = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})["brand_owner"]
         basic_info = {"source": "usda", "result": {"code": upc_string, "product_name": f'{upc_brand} {upc_name["description"]}'}}
         return jsonify(basic_info)
@@ -40,11 +40,15 @@ def lookup_off(upc_string):
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
 #    print(type(product_info))
     if product_info:
-        basic_info = {"source": "OpenFoodFacts", "result": {"code": product_info["code"], "product_name": product_info["product_name"]}}
+        basic_info = {"source": "OpenFoodFacts", "result": {"code": upc_string, "product_name": product_info["product_name"]}}
 #    return mongo.db.product.PyMongo.find_one({"code": upc_string})
         return jsonify(basic_info)
     return jsonify({"source": "OpenFoodFacts", "result": {"error": "Entry not found", "upc": upc_string}}), 404
 
+@app.route('/lookup/<upc_string>', methods=['GET'])
+def lookup(upc_string):
+    results = {"results": [lookup_off(upc_string)[0], lookup_usda(upc_string)[0], lookup_uhtt(upc_string)[0]]}
+    return jsonify(results)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port="5555")
