@@ -14,7 +14,7 @@ def lookup_uhtt(upc_string):
     upc_info = mongo.db.uhtt.find_one({"UPCEAN": int(upc_string)})
     if upc_info:
         basic_info = {"source": "UHTT", "result": {"code": upc_string, "product_name": upc_info["Name"]}}
-        return jsonify(basic_info)
+        return jsonify(basic_info), 200
     return jsonify({"source": "UHTT", "result": {"error": "Entry not found", "upc": upc_string}}), 404
 
 @app.route('/usda/<upc_string>', methods=['GET'])
@@ -30,7 +30,7 @@ def lookup_usda(upc_string):
 #        print(f'Found latest FDC entry: {upc_name["fdc_id"]}')
         upc_brand = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})["brand_owner"]
         basic_info = {"source": "USDA", "result": {"code": upc_string, "product_name": f'{upc_brand} {upc_name["description"]}'}}
-        return jsonify(basic_info)
+        return jsonify(basic_info), 200
 #    abort(404)
     return jsonify({"source": "USDA", "result": {"error": "Entry not found", "upc": upc_string}}), 404
 
@@ -42,7 +42,7 @@ def lookup_off(upc_string):
     if product_info:
         basic_info = {"source": "OpenFoodFacts", "result": {"code": upc_string, "product_name": product_info["product_name"]}}
 #    return mongo.db.product.PyMongo.find_one({"code": upc_string})
-        return jsonify(basic_info)
+        return jsonify(basic_info), 200
     return jsonify({"source": "OpenFoodFacts", "result": {"error": "Entry not found", "upc": upc_string}}), 404
 
 @app.route('/lookup/<upc_string>', methods=['GET'])
