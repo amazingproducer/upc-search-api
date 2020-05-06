@@ -7,6 +7,13 @@ app = Flask("__name__")
 app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
 mongo = PyMongo(app)
 
+@app.route('/uhtt/<upc_string>', methods=['GET'])
+def lookup_uhtt(upc_string):
+    print(f"UPC REQUESTED FROM UHTT: {upc_string}")
+    upc_info = mongo.db.uhtt.find_one_or_404({"UPCEAN": int(upc_string)})
+    basic_info = {"code": upc_info["UPCEAN"], "product_name": upc_info["Name"]}
+    return jsonify(basic_info)
+
 @app.route('/usda/<upc_string>', methods=['GET'])
 def lookup_usda(upc_string):
     print(f"UPC REQUESTED FROM USDA: {upc_string}")
