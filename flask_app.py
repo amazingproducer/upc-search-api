@@ -26,7 +26,7 @@ def lookup_usda(upc_string):
         upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
         print(f'Found latest FDC entry: {upc_name["fdc_id"]}')
         upc_brand = mongo.db.usda_find_one({"fdc_id": upc_name["fdc_id"]})["brand_owner"]
-        basic_info = {"code": upc_string, "product_name": f"{upc_brand} {upc_name["description"]}"}
+        basic_info = {"code": upc_string, "product_name": f'{upc_brand} {upc_name["description"]}'}
         return jsonify(basic_info)
     abort(404)
 
