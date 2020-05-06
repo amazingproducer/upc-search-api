@@ -37,6 +37,8 @@ def lookup_usda(upc_string):
 
 @app.route('/off/<upc_string>', methods=['GET'])
 def lookup_off(upc_string):
+    while len(upc_string) < 13:
+        upc_string = f"0{upc_string}"
     print(f"UPC REQUESTED FROM OPENFOODFACTS: {str(upc_string)}")
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
 #    print(type(product_info))
