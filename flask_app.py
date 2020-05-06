@@ -17,7 +17,7 @@ def lookup_uhtt(upc_string):
 @app.route('/usda/<upc_string>', methods=['GET'])
 def lookup_usda(upc_string):
     print(f"UPC REQUESTED FROM USDA: {upc_string}")
-    upc_info = mongo.db.usda_upc.find({"gtin_upc": int(upc_string)}).sort({"available_date":-1})[0]
+    upc_info = mongo.db.usda_upc.find({"gtin_upc": int(upc_string)}).sort({"available_date":-1}).limit(1)
     upc_name = mongo.db.usda_name.find_one_or_404({"fdc_id": upc_info["fdc_id"]})
 #    print(type(product_info))
     basic_info = {"code": upc_info["gtin_upc"], "product_name": upc_name["description"]}
