@@ -50,6 +50,8 @@ def lookup_off(upc_string):
 def lookup(upc_string):
 #    results = {"results": [lookup_off(upc_string).get_json(), lookup_usda(upc_string).get_json(), lookup_uhtt(upc_string).get_json()]}
     print(lookup_off(upc_string))
+    print(lookup_usda(upc_string))
+    print(lookup_uhtt(upc_string))
     return "doot"
 
 if __name__ == "__main__":
