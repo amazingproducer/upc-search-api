@@ -65,7 +65,7 @@ def grocy_barcode_name_search(upc_string):
         if ("error" not in j["result"]) and (not found):
             found = True
             result = {"product_name": j["result"]["product_name"]}
-            return jsonfiy(result)
+            return jsonify(result)
     if not found:
         result = {"error": "Entry not found", "upc": {upc_string}}
         return jsonify(result)
