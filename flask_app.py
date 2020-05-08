@@ -57,7 +57,7 @@ def lookup(upc_string):
     return jsonify(results)
 
 @app.route('/grocy/<upc_string>', methods=['GET'])
-def lookup(upc_string):
+def grocy_barcode_name_search(upc_string):
     found = None
     sources = [lookup_off, lookup_usda, lookup_uhtt]
     for source in sources:
