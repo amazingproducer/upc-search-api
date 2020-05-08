@@ -56,5 +56,21 @@ def lookup(upc_string):
 #    print(lookup_uhtt(upc_string))
     return jsonify(results)
 
+@app.route('/grocy/<upc_string>', methods=['GET'])
+def lookup(upc_string):
+    found = None
+    sources = [lookup_off, lookup_usda, lookup_uhtt]
+    for source in sources:
+        j = source(upc_string)[0].get_json()
+        if ("error" not in j["result"]) and (not found):
+            found = True
+            result = {"product_name": j["result"]["product_name"]}
+            return jsonfiy(result)
+    if not found:
+        result = {"error": "Entry not found", "upc": {upc_string}}
+        return jsonify(result)
+
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port="5555")
