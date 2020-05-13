@@ -3,13 +3,19 @@
 from flask_pymongo import PyMongo
 from flask import Flask, request, jsonify, abort
 app = Flask("__name__")
-#app.config["MONGO_DBNAME"] = "test"
 app.config['JSON_SORT_KEYS'] = False #Because ordered data is pretty data too
 app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
 mongo = PyMongo(app)
 
+def check_input(upc_string):
+    if upc_string.isnumeric():
+        return True
+    return False
+
 @app.route('/uhtt/<upc_string>', methods=['GET'])
 def lookup_uhtt(upc_string):
+    if not check_input(upc_string):
+        return jsonify({"error": "expected a numeric barcode."})
     print(f"UPC REQUESTED FROM UHTT: {upc_string}")
     upc_info = mongo.db.uhtt.find_one({"UPCEAN": int(upc_string)})
     if upc_info:
@@ -19,6 +25,8 @@ def lookup_uhtt(upc_string):
 
 @app.route('/usda/<upc_string>', methods=['GET'])
 def lookup_usda(upc_string):
+    if not check_input(upc_string):
+        return jsonify({"error": "expected a numeric barcode."})
     print(f"UPC REQUESTED FROM USDA: {upc_string}")
 #    upc_info = mongo.db.usda_upc.find({"gtin_upc": int(upc_string)}).sort([("available_date",-1)])[0]
     upc_results = mongo.db.usda_upc.find({"gtin_upc": int(upc_string)})
@@ -37,6 +45,8 @@ def lookup_usda(upc_string):
 
 @app.route('/off/<upc_string>', methods=['GET'])
 def lookup_off(upc_string):
+    if not check_input(upc_string):
+        return jsonify({"error": "expected a numeric barcode."})
     while len(upc_string) < 13:
         upc_string = f"0{upc_string}"
     print(f"UPC REQUESTED FROM OPENFOODFACTS: {str(upc_string)}")
@@ -50,6 +60,8 @@ def lookup_off(upc_string):
 
 @app.route('/lookup/<upc_string>', methods=['GET'])
 def lookup(upc_string):
+    if not check_input(upc_string):
+        return jsonify({"error": "expected a numeric barcode."})
     results = {"results": [lookup_off(upc_string)[0].get_json(), lookup_usda(upc_string)[0].get_json(), lookup_uhtt(upc_string)[0].get_json()]}
 #    print(lookup_off(upc_string)[0].get_json())
 #    print(lookup_usda(upc_string))
@@ -58,6 +70,8 @@ def lookup(upc_string):
 
 @app.route('/grocy/<upc_string>', methods=['GET'])
 def grocy_barcode_name_search(upc_string):
+    if not check_input(upc_string):
+        return jsonify({"error": "expected a numeric barcode."})
     found = None
     sources = [lookup_off, lookup_usda, lookup_uhtt]
     for source in sources:
