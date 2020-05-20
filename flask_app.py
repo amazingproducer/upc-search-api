@@ -36,15 +36,19 @@ def match_foodkeeper(query):
     # in order to find a match for our product query.
     best_match_rate = 0
     best_match_entry = None
+    matching_entries = {}
     for i in fk_products:
         for j in i:
             if 'Keywords' in j.keys():
-                fk_match = fuzz.partial_ratio(str(j['Keywords']), query)
+                fk_match = fuzz.partial_ratio(str(j['Keywords']).lower(), query)
+                if fk_match > 85:
+                    matching_entries[f"{i[0]['ID']}"] = fk_match
                 if fk_match > best_match_rate:
                     best_match_rate = fk_match
                     best_match_entry = i
-    print(best_match_entry)
+    print(matching_entries)
     print(f"Match rate: {best_match_rate}")
+    print(best_match_entry)
 
 @app.route('/uhtt/<upc_string>', methods=['GET'])
 def lookup_uhtt(upc_string):
@@ -130,7 +134,7 @@ def grocy_barcode_name_search(upc_string):
         result = {"error": "Entry not found", "upc": upc_string}
         return jsonify(result)
 
-match_foodkeeper("cheese")
+match_foodkeeper("hummus")
 
 #if __name__ == "__main__":
 #    app.run(host="0.0.0.0", port="5555")
