@@ -2,15 +2,49 @@
 
 from flask_pymongo import PyMongo
 from flask import Flask, request, jsonify, abort
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
+import json
+
 app = Flask("__name__")
 app.config['JSON_SORT_KEYS'] = False #Because ordered data is pretty data too
 app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
 mongo = PyMongo(app)
 
+fk_file = open('./foodkeeper.json', 'r')
+fk = json.load(fk_file)
+fk_categories = fk['sheets'][1]['data']
+fk_products = fk['sheets'][2]['data']
+fk_names = []
+fk_keywords = []
+
+for i in fk_products:
+    for j in i:
+        if 'Name' in j.keys():
+            fk_names.append(j['Name']) # this makes a list of product names, but some names are identical
+        if 'Keywords' in j.keys():
+            fk_keywords.append(j['Keywords']) # this makes a list of keyword sets, but some keyword sets are strikingly similar
+
+
 def check_input(upc_string):
     if upc_string.isnumeric():
         return True
     return False
+
+def match_foodkeeper(query):
+    # Do some fuzzy searching through foodkeeper's categories and products
+    # in order to find a match for our product query.
+    best_match_rate = 0
+    best_match_entry = None
+    for i in fk_products:
+        for j in i:
+            if 'Keywords' in j.keys():
+                fk_match = fuzz.partial_ratio(str(j['Keywords']), query)
+                if fk_match > best_match_rate:
+                    best_match_rate = fk_match
+                    best_match_entry = i
+    print(best_match_entry)
+    print(f"Match rate: {best_match_rate}")
 
 @app.route('/uhtt/<upc_string>', methods=['GET'])
 def lookup_uhtt(upc_string):
@@ -96,7 +130,7 @@ def grocy_barcode_name_search(upc_string):
         result = {"error": "Entry not found", "upc": upc_string}
         return jsonify(result)
 
+match_foodkeeper("cheese")
 
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="5555")
+#if __name__ == "__main__":
+#    app.run(host="0.0.0.0", port="5555")
