@@ -53,21 +53,24 @@ def match_foodkeeper(query):
                 if fk_match > best_match_rate:
                     best_match_rate = fk_match
                     best_match_entry = i[0]["ID"]
+                    best_match_name = f"{i[2]['Name']} ({i[3]['Name_subtitle']})"
     print(f"Search matches: {matching_entries}")
 #    print(f"Match rate: {best_match_rate}")
-#    print(best_match_entry)
+    print(f"Best match: {best_match_name} ({best_match_rate})")
     if best_match_rate > 50:
         return best_match_entry
     else:
         return None
 
 def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
+    # TODO get category for product when possible to refine this
     p_stor = []
     po_stor = []
     r_stor = []
     ro_stor = []
     for i in fk_products:
         if i[0]["ID"] == id:
+            print(i)
             for j in i:
                 for k in j.keys():
                     for l in ["Pantry_Min", "Pantry_Max", "Pantry_Metric"]:
@@ -84,28 +87,29 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
                             ro_stor.append(j)
     for i in [p_stor, po_stor, r_stor, ro_stor]:
         if len(i) == 3:
-            min = list(i[0].values())[0]
-            if int(min) == min:
-                min = int(min)
-            max = list(i[1].values())[0]
-            if int(max) == max:
-                max = int(max)
-            avg = (min+max)/2
-            if int(avg) == avg:
-                avg = int(avg)
+            min_i = list(i[0].values())[0]
+            if int(min_i) == min_i:
+                min_i = int(min_i)
+            max_i = list(i[1].values())[0]
+            if int(max_i) == max_i:
+                max_i = int(max_i)
+            avg_i = (min_i+max_i)/2
+            if int(avg_i) == avg_i:
+                avg_i = int(avg_i)
             metric = list(i[2].values())[0]
-            if "o_" in i:
-                print("After opening:")
-            elif "p" in i:
-                print("Pantry storage:")
-            else:
-                print("Refrigerated storage:")
+            for j in i:
+                if "After_Opening" in list(j.keys())[0]:
+                    print("After opening:")
+                elif "Pantry_M" in list(j.keys())[0]:
+                    print("Pantry storage:")
+                elif "Refrigerate_M" in list(j.keys())[0]:
+                    print("Refrigerated storage:")
             if dsr == "min":
-                print(f"{min} {metric}")
+                print(f"{min_i} {metric}")
             if dsr == "max":
-                print(f"{max} {metric}")
+                print(f"{max_i} {metric}")
             if dsr == "avg":
-                print(f"{avg} {metric}")
+                print(f"{avg_i} {metric}")
 
 @app.route('/uhtt/<upc_string>', methods=['GET'])
 def lookup_uhtt(upc_string):
@@ -194,7 +198,7 @@ def grocy_barcode_name_search(upc_string):
 #get_storability(match_foodkeeper("Yoplait Original Harvest Peach Low Fat Yogurt"))
 
 for i in ["min", "max", "avg"]:
-    get_storability(match_foodkeeper("Yoplait Original Harvest Peach Low Fat Yogurt"), i)
+    get_storability(match_foodkeeper("Harney&sons winter White earl gry tea"), i)
 
 # for i in fk_products:
 #     if i[3]['Name_subtitle'] == None:
