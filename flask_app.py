@@ -6,6 +6,8 @@ from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 import json
 
+DEFAULT_STORABILITY_RANGE = "min" # Choose from "min", "max", or "avg"
+
 app = Flask("__name__")
 app.config['JSON_SORT_KEYS'] = False #Because ordered data is pretty data too
 app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
@@ -37,18 +39,73 @@ def match_foodkeeper(query):
     best_match_rate = 0
     best_match_entry = None
     matching_entries = {}
+    print(f"Scanned product to search: {query}")
     for i in fk_products:
         for j in i:
             if 'Keywords' in j.keys():
                 fk_match = fuzz.partial_ratio(str(j['Keywords']).lower(), query)
-                if fk_match > 85:
-                    matching_entries[f"{i[0]['ID']}"] = fk_match
+                if fk_match > 50:
+                    if i[3]['Name_subtitle'] == None:
+                        match_name = i[2]['Name']
+                    else:
+                        match_name = f"{i[2]['Name']} ({i[3]['Name_subtitle']})"
+                    matching_entries[match_name] = fk_match
                 if fk_match > best_match_rate:
                     best_match_rate = fk_match
-                    best_match_entry = i
-    print(matching_entries)
-    print(f"Match rate: {best_match_rate}")
-    print(best_match_entry)
+                    best_match_entry = i[0]["ID"]
+    print(f"Search matches: {matching_entries}")
+#    print(f"Match rate: {best_match_rate}")
+#    print(best_match_entry)
+    if best_match_rate > 50:
+        return best_match_entry
+    else:
+        return None
+
+def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
+    p_stor = []
+    po_stor = []
+    r_stor = []
+    ro_stor = []
+    for i in fk_products:
+        if i[0]["ID"] == id:
+            for j in i:
+                for k in j.keys():
+                    for l in ["Pantry_Min", "Pantry_Max", "Pantry_Metric"]:
+                        if l in k and None not in j.values():
+                            p_stor.append(j)
+                    for l in ["Pantry_After_Opening_Min", "Pantry_After_Opening_Max", "Pantry_After_Opening_Metric"]:
+                        if l in k and None not in j.values():
+                            po_stor.append(j)
+                    for l in ["Refrigerate_Min", "Refrigerate_Max", "Refrigerate_Metric"]:
+                        if l in k and None not in j.values():
+                            r_stor.append(j)
+                    for l in ["Refrigerate_After_Opening_Min", "Refrigerate_After_Opening_Max", "Refrigerate_After_Opening_Metric"]:
+                        if l in k and None not in j.values():
+                            ro_stor.append(j)
+    for i in [p_stor, po_stor, r_stor, ro_stor]:
+        if len(i) == 3:
+            min = list(i[0].values())[0]
+            if int(min) == min:
+                min = int(min)
+            max = list(i[1].values())[0]
+            if int(max) == max:
+                max = int(max)
+            avg = (min+max)/2
+            if int(avg) == avg:
+                avg = int(avg)
+            metric = list(i[2].values())[0]
+            if "o_" in i:
+                print("After opening:")
+            elif "p" in i:
+                print("Pantry storage:")
+            else:
+                print("Refrigerated storage:")
+            if dsr == "min":
+                print(f"{min} {metric}")
+            if dsr == "max":
+                print(f"{max} {metric}")
+            if dsr == "avg":
+                print(f"{avg} {metric}")
 
 @app.route('/uhtt/<upc_string>', methods=['GET'])
 def lookup_uhtt(upc_string):
@@ -134,7 +191,18 @@ def grocy_barcode_name_search(upc_string):
         result = {"error": "Entry not found", "upc": upc_string}
         return jsonify(result)
 
-match_foodkeeper("hummus")
+#get_storability(match_foodkeeper("Yoplait Original Harvest Peach Low Fat Yogurt"))
+
+for i in ["min", "max", "avg"]:
+    get_storability(match_foodkeeper("Yoplait Original Harvest Peach Low Fat Yogurt"), i)
+
+# for i in fk_products:
+#     if i[3]['Name_subtitle'] == None:
+#         match_name = i[2]['Name']
+#     else:
+#         match_name = f"{i[2]['Name']} ({i[3]['Name_subtitle']})"
+#     print(match_name)
+#     get_storability(i[0]["ID"])
 
 #if __name__ == "__main__":
 #    app.run(host="0.0.0.0", port="5555")
