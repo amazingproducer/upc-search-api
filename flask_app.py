@@ -213,7 +213,7 @@ def lookup_usda(upc_string):
         for j in upc_category:
             if len(j) == 1:
                 upc_category.remove(j)
-            upc_category.index(j) = s.singular_noun(j)
+            upc_category.index(j) = str(s.singular_noun(j))
         upc_category = " ".join(upc_category)
         basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(upc_category), dsr=request.args.get('s', default = 'avg', type = str))}
         basic_info["result"]["code"] = upc_string 
