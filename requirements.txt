@@ -2,3 +2,4 @@ flask
 Flask-PyMongo
 fuzzywuzzy
 python-Levenshtein
+inflect
