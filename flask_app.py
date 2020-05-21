@@ -195,7 +195,7 @@ def lookup_uhtt(upc_string):
 
 @app.route('/usda/<upc_string>', methods=['GET'])
 def lookup_usda(upc_string):
-    s = inflect.engion()
+    s = inflect.engine()
     if not check_input(upc_string):
         return jsonify({"error": "expected a numeric barcode."})
     print(f"UPC REQUESTED FROM USDA: {upc_string}")
