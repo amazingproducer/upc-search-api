@@ -31,6 +31,9 @@ for i in fk_products:
         if 'Keywords' in j.keys():
             fk_keywords.append(j['Keywords']) # this makes a list of keyword sets, but some keyword sets are strikingly similar
 
+for i in fk_categories:
+    for j in i:
+        print(i)
 
 def check_input(upc_string):
     if upc_string.isnumeric():
