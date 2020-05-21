@@ -231,7 +231,9 @@ def lookup_off(upc_string):
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
 #    print(type(product_info))
     if product_info:
-        basic_info = {"source": "OpenFoodFacts", "result": {"code": upc_string, "product_name": product_info["product_name"]}}
+        basic_info = {"source": "OpenFoodFacts", "result": match_foodkeeper_product(" ".join(product_info['_keywords'])) }
+        basic_info["result"]["code"] = upc_string
+        basic_info["result"]["product_name"] = product_info["product_name"]
 #    return mongo.db.product.PyMongo.find_one({"code": upc_string})
         return jsonify(basic_info), 200
     return jsonify({"source": "OpenFoodFacts", "result": {"error": "Entry not found", "upc": upc_string}}), 404
