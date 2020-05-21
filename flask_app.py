@@ -224,6 +224,7 @@ def lookup_usda(upc_string):
 
 @app.route('/off/<upc_string>', methods=['GET'])
 def lookup_off(upc_string):
+    s = inflect.engine()
     if not check_input(upc_string):
         return jsonify({"error": "expected a numeric barcode."})
     while len(upc_string) < 13:
@@ -234,7 +235,7 @@ def lookup_off(upc_string):
     if product_info:
         print(f"Product categories: {product_info['categories']}")
 #        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["product_name"]} {" ".join(product_info["_keywords"])}'), dsr=request.args.get('s', default = 'avg', type = str)) }
-        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{inflect.engine().singular(product_info["categories_hierarchy"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str)) } # refactor this and catch errors when getting hierarchy
+        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["categories_hierarchy"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str)) } # refactor this and catch errors when getting hierarchy
         print(basic_info)
         basic_info["result"]["code"] = str(upc_string)
         basic_info["result"]["product_name"] = product_info["product_name"]
