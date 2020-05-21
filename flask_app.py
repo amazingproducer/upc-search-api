@@ -263,11 +263,11 @@ def grocy_barcode_name_search(upc_string):
         j = source(upc_string)[0].get_json()
         if ("error" not in j["result"]) and (not found):
             found = True
-            p_name = j["result"]["product_name"]
-            result = get_storability(match_foodkeeper_product(p_name))
-            result["product_name"] = p_name
-            result["upc"] = upc_string
-            return jsonify(result)
+            # p_name = j["result"]["product_name"]
+            # result = get_storability(match_foodkeeper_product(p_name))
+            # result["product_name"] = p_name
+            #result["upc"] = upc_string
+            return jsonify(j)
     if not found:
         result = {"error": "Entry not found", "upc": upc_string}
         return jsonify(result)
