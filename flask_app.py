@@ -229,6 +229,7 @@ def lookup_usda(upc_string):
         upc_category = " ".join(c_list)
         upc_cat_singular = []
         for l in upc_category.split():
+            print(l)
             upc_cat_singular.append(s.singular_noun(l.strip()))
         upc_category = " ".join(upc_cat_singular) # this is shameful
 
