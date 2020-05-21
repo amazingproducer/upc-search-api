@@ -121,7 +121,7 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
     m_ratio = {"Days":1, "Weeks":7, "Months":30, "Years":365}
     for i in fk_products:
         if i[0]["ID"] == id:
-            print(i)
+#            print(i)
             for j in i:
                 for k in j.keys():
                     for l in ["Pantry_Min", "Pantry_Max", "Pantry_Metric"]:
@@ -207,27 +207,27 @@ def lookup_usda(upc_string):
     if len(fdc_ids) > 0:
         upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
         upc_data = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})
-        print(f"UPC Name data: {upc_name}")
-        print(f"UPC Product data: {upc_data}")
+#        print(f"UPC Name data: {upc_name}")
+#        print(f"UPC Product data: {upc_data}")
         upc_brand = upc_data["brand_owner"]
         upc_category = upc_data["branded_food_category"].split() # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
         c_list = []
         for j in upc_category: # clean category array
             if len(j) == 1:
                 upc_category.remove(j)
-            print(j)
+#            print(j)
             for k in j:   # omg this is a mess and won't catch multiple nonalpha instances properly
-                print(k)
+#                print(k)
                 if not k.isalpha():
-                    print(f"Cleanup: removing {k}")
+#                    print(f"Cleanup: removing {k}")
                     c_list.append(j.replace(k, " "))
                     replaced = True
             if not replaced:
                 c_list.append(j)
                 replaced = False
-        print(f"c_list: {c_list}")
+#        print(f"c_list: {c_list}")
         upc_category = " ".join(c_list)
-        print(f"upc_category: {upc_category}")
+#        print(f"upc_category: {upc_category}")
         upc_cat_singular = []
         for l in upc_category.split():
             if s.singular_noun(l.strip()):
@@ -236,9 +236,9 @@ def lookup_usda(upc_string):
                 upc_cat_singular.append(l.strip())
         upc_category = " ".join(upc_cat_singular) # this is shameful
 
-        print(f"Cleaned category value: {upc_category}")
-        print(F"UPC Name: {upc_name}")
-        print(get_storability(match_foodkeeper_product(f"{upc_category}"), dsr=request.args.get('s', default = 'avg', type = str)))
+#        print(f"Cleaned category value: {upc_category}")
+#        print(F"UPC Name: {upc_name}")
+#        print(get_storability(match_foodkeeper_product(f"{upc_category}"), dsr=request.args.get('s', default = 'avg', type = str)))
         basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(f"{upc_category}"), dsr=request.args.get('s', default = 'avg', type = str))}
         basic_info["result"]["code"] = upc_string 
         basic_info["result"]["product_name"] =  f'{upc_brand} {upc_name["description"]}'
