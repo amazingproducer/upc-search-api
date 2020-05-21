@@ -217,7 +217,7 @@ def lookup_usda(upc_string):
             if len(j) == 1:
                 upc_category.remove(j)
             for k in j:
-                if not k.isalpha()
+                if not k.isalpha():
                     word.append(" ")
                 else:
                     word.append(k)
