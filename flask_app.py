@@ -233,7 +233,7 @@ def lookup_off(upc_string):
     if product_info:
         print(product_info['categories'])
 #        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["product_name"]} {" ".join(product_info["_keywords"])}'), dsr=request.args.get('s', default = 'avg', type = str)) }
-        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["categories"]}'), dsr=request.args.get('s', default = 'avg', type = str)) }
+        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["categories_hierarchy"][-1].split(":")[1]}'), dsr=request.args.get('s', default = 'avg', type = str)) }
         print(basic_info)
         basic_info["result"]["code"] = str(upc_string)
         basic_info["result"]["product_name"] = product_info["product_name"]
