@@ -215,7 +215,9 @@ def lookup_usda(upc_string):
         for j in upc_category: # clean category array
             if len(j) == 1:
                 upc_category.remove(j)
+            print(j)
             for k in j:   # omg this is a mess and won't catch multiple nonalpha instances properly
+                print(k)
                 if not k.isalpha():
                     upc_category[upc_category.index(k)] = upc_category[upc_category.index(k)].replace(str(k), " ")
             c_list.append(j)
