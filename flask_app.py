@@ -225,8 +225,9 @@ def lookup_usda(upc_string):
             if not replaced:
                 c_list.append(j)
                 replaced = False
-        print(c_list)
+        print(f"c_list: {c_list}")
         upc_category = " ".join(c_list)
+        print(f"upc_category: {upc_category}")
         upc_cat_singular = []
         for l in upc_category.split():
             print(l)
