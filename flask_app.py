@@ -7,10 +7,14 @@ from fuzzywuzzy import process
 import json
 
 DEFAULT_STORABILITY_RANGE = "min" # Choose from "min", "max", or "avg"
+USE_PRODUCT_USERFIELDS = True # Setting to True requires grocy product userfields:
+# refrigerate_after_opening: Boolean
+# refrigeration_required: Boolean
 
 app = Flask("__name__")
 app.config['JSON_SORT_KEYS'] = False #Because ordered data is pretty data too
-app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
+#app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
+app.config["MONGO_URI"] = "mongodb://10.8.0.55:27017/upc-data"
 mongo = PyMongo(app)
 
 fk_file = open('./foodkeeper.json', 'r')
@@ -33,7 +37,43 @@ def check_input(upc_string):
         return True
     return False
 
-def match_foodkeeper(query):
+
+def match_foodkeeper_category(query):
+    # Do some fuzzy searching through foodkeeper's categories and products
+    # in order to find a match for our product query.
+    best_match_rate = 0
+    best_match_entry = None
+    matching_entries = {}
+    print(f"Scanned product to search: {query}")
+    for i in fk_categories:
+        fk_match = fuzz.token_set_ratio(str(f"{i[1]['Category_Name']} {i[2]['Subcategory_Name']}").lower(), query)
+        if fk_match > 50:
+            if i[2]['Subcategory_Name'] == None:
+                match_name = i[1]['Category_Name']
+            else:
+                match_name = f"{i[1]['Category_Name']} ({i[2]['Subcategory_Name']})"
+            matching_entries[match_name] = fk_match
+        if fk_match > best_match_rate:
+            best_match_rate = fk_match
+            best_match_entry = i[0]["ID"]
+            if i[2]['Subcategory_Name'] == None:
+                best_match_name = i[1]['Category_Name']
+            else:
+                best_match_name = f"{i[1]['Category_Name']} ({i[2]['Subcategory_Name']})"
+    if len(matching_entries):
+        print(f"Search matches: {matching_entries}")
+    else:
+        print("Search matches: None")
+#    print(f"Match rate: {best_match_rate}")
+    if best_match_rate > 50:
+        print(f"Best match: {best_match_name} ({best_match_rate}% confidence)")
+        return best_match_entry
+    else:
+        print("Best match: None")
+        return None
+
+
+def match_foodkeeper_product(query):
     # Do some fuzzy searching through foodkeeper's categories and products
     # in order to find a match for our product query.
     best_match_rate = 0
@@ -43,7 +83,7 @@ def match_foodkeeper(query):
     for i in fk_products:
         for j in i:
             if 'Keywords' in j.keys():
-                fk_match = fuzz.partial_ratio(str(j['Keywords']).lower(), query)
+                fk_match = fuzz.token_set_ratio(str(j['Keywords']).lower(), query)
                 if fk_match > 50:
                     if i[3]['Name_subtitle'] == None:
                         match_name = i[2]['Name']
@@ -53,13 +93,18 @@ def match_foodkeeper(query):
                 if fk_match > best_match_rate:
                     best_match_rate = fk_match
                     best_match_entry = i[0]["ID"]
-                    best_match_name = f"{i[2]['Name']} ({i[3]['Name_subtitle']})"
-    print(f"Search matches: {matching_entries}")
+                    if i[3]['Name_subtitle'] == None:
+                        best_match_name = i[2]['Name']
+                    else:
+                        best_match_name = f"{i[2]['Name']} ({i[3]['Name_subtitle']})"
+    if len(matching_entries):
+        print(f"Search matches: {matching_entries}")
 #    print(f"Match rate: {best_match_rate}")
-    print(f"Best match: {best_match_name} ({best_match_rate})")
     if best_match_rate > 50:
+        print(f"Best match: {best_match_name} ({best_match_rate}% confidence)")
         return best_match_entry
     else:
+        print("Best match: None")
         return None
 
 def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
@@ -68,9 +113,12 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
     po_stor = []
     r_stor = []
     ro_stor = []
+    storability = {}
+    userfields = {}
+    m_ratio = {"Days":1, "Weeks":7, "Months":30, "Years":365}
     for i in fk_products:
         if i[0]["ID"] == id:
-            print(i)
+#            print(i)
             for j in i:
                 for k in j.keys():
                     for l in ["Pantry_Min", "Pantry_Max", "Pantry_Metric"]:
@@ -87,6 +135,7 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
                             ro_stor.append(j)
     for i in [p_stor, po_stor, r_stor, ro_stor]:
         if len(i) == 3:
+            s_key = None
             min_i = list(i[0].values())[0]
             if int(min_i) == min_i:
                 min_i = int(min_i)
@@ -97,19 +146,38 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
             if int(avg_i) == avg_i:
                 avg_i = int(avg_i)
             metric = list(i[2].values())[0]
-            for j in i:
-                if "After_Opening" in list(j.keys())[0]:
-                    print("After opening:")
-                elif "Pantry_M" in list(j.keys())[0]:
-                    print("Pantry storage:")
-                elif "Refrigerate_M" in list(j.keys())[0]:
-                    print("Refrigerated storage:")
-            if dsr == "min":
-                print(f"{min_i} {metric}")
-            if dsr == "max":
-                print(f"{max_i} {metric}")
-            if dsr == "avg":
-                print(f"{avg_i} {metric}")
+            if "Pantry_After" in list(i[0].keys())[0]:
+#                print("After opening:")
+                s_key = 'default_best_before_days_after_open'
+            elif "Refrigerate_After" in list(i[0].keys())[0]:
+#                print("Refrigerate after opening!")
+                s_key = 'default_best_before_days_after_open'
+                if USE_PRODUCT_USERFIELDS:
+                    userfields["refrigerate_after_opening"] = True
+                    storability['userfields'] = userfields
+            elif "Pantry_M" in list(i[0].keys())[0]:
+#                print("Pantry storage:")
+                s_key = 'default_best_before_days'
+            elif "Refrigerate_M" in list(i[0].keys())[0]:
+#                print("Refrigerated storage required!")
+                s_key = 'default_best_before_days'
+                if USE_PRODUCT_USERFIELDS:
+                    userfields['refrigeration_required'] = True
+                    storability['userfields'] = userfields
+            if metric in m_ratio.keys():
+                if dsr == "min":
+                    storability[s_key] = min_i * m_ratio[metric]
+#                    print(f"{min_i} {metric}")
+                if dsr == "max":
+                    storability[s_key] = max_i * m_ratio[metric]
+#                    print(f"{max_i} {metric}")
+                if dsr == "avg":
+                    storability[s_key] = avg_i * m_ratio[metric]
+#                    print(f"{avg_i} {metric}")
+            else:
+                return {"Error": "Unsupported storability metric."}
+    print(storability)
+    return(storability)
 
 @app.route('/uhtt/<upc_string>', methods=['GET'])
 def lookup_uhtt(upc_string):
@@ -189,16 +257,24 @@ def grocy_barcode_name_search(upc_string):
         j = source(upc_string)[0].get_json()
         if ("error" not in j["result"]) and (not found):
             found = True
-            result = {"product_name": j["result"]["product_name"], "upc": upc_string}
+            p_name = j["result"]["product_name"]
+            result = get_storability(match_foodkeeper_product(p_name))
+            result["product_name"] = p_name
+            result["upc"] = upc_string
             return jsonify(result)
     if not found:
         result = {"error": "Entry not found", "upc": upc_string}
         return jsonify(result)
 
-#get_storability(match_foodkeeper("Yoplait Original Harvest Peach Low Fat Yogurt"))
 
-for i in ["min", "max", "avg"]:
-    get_storability(match_foodkeeper("Harney&sons winter White earl gry tea"), i)
+
+get_storability(match_foodkeeper_product("Yoplait Original Harvest Peach Low Fat Yogurt"))
+
+get_storability(match_foodkeeper_product("Best Foods Mayonnaise, 32 oz."))
+
+grocy_barcode_name_search("070470290614")
+
+#match_foodkeeper_category("Best Foods Mayonnaise, 32 oz.")
 
 # for i in fk_products:
 #     if i[3]['Name_subtitle'] == None:
