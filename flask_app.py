@@ -220,9 +220,10 @@ def lookup_usda(upc_string):
                 print(k)
                 if not k.isalpha():
                     c_list.append(j.replace(k, " "))
-                    break
-#                    upc_category[upc_category.index(j)] = upc_category[upc_category.index(j)].replace(str(k), " ")
-            c_list.append(j)
+                    replaced = True
+            if not replaced:
+                c_list.append(j)
+                replaced = False
         upc_category = " ".join(c_list)
         upc_cat_singular = []
         for l in upc_category.split():
