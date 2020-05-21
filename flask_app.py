@@ -231,7 +231,7 @@ def lookup_off(upc_string):
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
 #    print(type(product_info))
     if product_info:
-        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(" ".join(product_info['_keywords']))) }
+        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(" ".join(product_info['_keywords'])), dsr=request.args.get('s', default = 'avg', type = str)) }
         print(basic_info)
         basic_info["result"]["code"] = str(upc_string)
         basic_info["result"]["product_name"] = product_info["product_name"]
