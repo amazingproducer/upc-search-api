@@ -218,7 +218,7 @@ def lookup_usda(upc_string):
         upc_category = " ".join(c_list)
         basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(upc_category), dsr=request.args.get('s', default = 'avg', type = str))}
         basic_info["result"]["code"] = upc_string 
-        basic_info["product_name"] =  f'{upc_brand} {upc_name["description"]}'
+        basic_info["result"]["product_name"] =  f'{upc_brand} {upc_name["description"]}'
 #        print(jsonify(basic_info))
         return jsonify(basic_info), 200
 #    abort(404)
