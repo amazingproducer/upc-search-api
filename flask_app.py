@@ -232,7 +232,7 @@ def lookup_off(upc_string):
 #    print(type(product_info))
     if product_info:
         basic_info = {"source": "OpenFoodFacts", "result": match_foodkeeper_product(" ".join(product_info['_keywords'])) }
-        basic_info["result"]["code"] = upc_string
+        basic_info["result"]["code"] = str(upc_string)
         basic_info["result"]["product_name"] = product_info["product_name"]
 #    return mongo.db.product.PyMongo.find_one({"code": upc_string})
         return jsonify(basic_info), 200
