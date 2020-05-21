@@ -230,8 +230,10 @@ def lookup_usda(upc_string):
         print(f"upc_category: {upc_category}")
         upc_cat_singular = []
         for l in upc_category.split():
-            print(s.singular_noun(l), l)
-            upc_cat_singular.append(s.singular_noun(l.strip()))
+            if s.singular_noun(l.strip()):
+                upc_cat_singular.append(s.singular_noun(l.strip()))
+            else:
+                upc_cat_singular.append(l.strip())
         upc_category = " ".join(upc_cat_singular) # this is shameful
 
         print(f"Cleaned category value: {upc_category}")
