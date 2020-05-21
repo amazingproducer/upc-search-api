@@ -191,7 +191,7 @@ def lookup_uhtt(upc_string):
 
 @app.route('/usda/<upc_string>', methods=['GET'])
 def lookup_usda(upc_string):
-    if not check_input(upc_string, more):
+    if not check_input(upc_string):
         return jsonify({"error": "expected a numeric barcode."})
     print(f"UPC REQUESTED FROM USDA: {upc_string}")
 #    upc_info = mongo.db.usda_upc.find({"gtin_upc": int(upc_string)}).sort([("available_date",-1)])[0]
@@ -267,11 +267,11 @@ def grocy_barcode_name_search(upc_string):
 
 
 
-get_storability(match_foodkeeper_product("Yoplait Original Harvest Peach Low Fat Yogurt"))
+#get_storability(match_foodkeeper_product("Yoplait Original Harvest Peach Low Fat Yogurt"))
 
-get_storability(match_foodkeeper_product("Best Foods Mayonnaise, 32 oz."))
+#get_storability(match_foodkeeper_product("Best Foods Mayonnaise, 32 oz."))
 
-grocy_barcode_name_search("070470290614")
+#grocy_barcode_name_search("070470290614")
 
 #match_foodkeeper_category("Best Foods Mayonnaise, 32 oz.")
 
@@ -283,5 +283,5 @@ grocy_barcode_name_search("070470290614")
 #     print(match_name)
 #     get_storability(i[0]["ID"])
 
-#if __name__ == "__main__":
-#    app.run(host="0.0.0.0", port="5555")
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port="5555")
