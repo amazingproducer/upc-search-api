@@ -195,6 +195,7 @@ def lookup_uhtt(upc_string):
 
 @app.route('/usda/<upc_string>', methods=['GET'])
 def lookup_usda(upc_string):
+    s = inflect.engion()
     if not check_input(upc_string):
         return jsonify({"error": "expected a numeric barcode."})
     print(f"UPC REQUESTED FROM USDA: {upc_string}")
@@ -205,21 +206,18 @@ def lookup_usda(upc_string):
         fdc_ids.append(i["fdc_id"])
     if len(fdc_ids) > 0:
         upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
-#        print(f'Found latest FDC entry: {upc_name["fdc_id"]}')
+        upc_data = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})
 
-# TODO this should fill the 'more' request, but the cart is before the horse at this point
-        # if more:
-        #     u = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})
-        #     m = {}
-        #     m["product_name"] = f'{u["brand_owner"]} {upc_name["description"]}'
-        #     m["default_best_before_days"] = "" # TODO fill this out ayyyy
-        #     m["default_best_before_days_after_open"]
-
-
-
-
-        upc_brand = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})["brand_owner"]
-        basic_info = {"source": "USDA", "result": {"code": upc_string, "product_name": f'{upc_brand} {upc_name["description"]}'}}
+        upc_brand = upc_data["brand_owner"]
+        upc_category = upc_data["branded_food_category"].split() # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
+        for j in upc_category:
+            if len(j) == 1:
+                upc_category.remove(j)
+            upc_category.index(j) = s.singular_noun(j)
+        upc_category = " ".join(upc_category)
+        basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(upc_category), dsr=request.args.get('s', default = 'avg', type = str))
+        basic_info["result"]["code"] = upc_string 
+        basic_info["product_name"] =  f'{upc_brand} {upc_name["description"]}'
 #        print(jsonify(basic_info))
         return jsonify(basic_info), 200
 #    abort(404)
