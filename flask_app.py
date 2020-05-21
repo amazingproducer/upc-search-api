@@ -213,12 +213,19 @@ def lookup_usda(upc_string):
         upc_category = upc_data["branded_food_category"].split() # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
         c_list = []
         for j in upc_category:
+            word = ""
             if len(j) == 1:
                 upc_category.remove(j)
-            c_list.append(s.singular_noun(j))
+            for k in j:
+                if not k.isalpha()
+                    word.append(" ")
+                else:
+                    word.append(k)
+            c_list.append(s.singular_noun("".join(word)))
+#            c_list.append(s.singular_noun(j))
         upc_category = " ".join(c_list)
         print(f"Cleaned category strings: {upc_category}")
-        basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(upc_category), dsr=request.args.get('s', default = 'avg', type = str))}
+        basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(f"{upc_category} {upc_name}"), dsr=request.args.get('s', default = 'avg', type = str))}
         basic_info["result"]["code"] = upc_string 
         basic_info["result"]["product_name"] =  f'{upc_brand} {upc_name["description"]}'
 #        print(jsonify(basic_info))
