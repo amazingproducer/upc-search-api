@@ -228,9 +228,9 @@ def lookup_off(upc_string):
     if not check_input(upc_string):
         return jsonify({"error": "expected a numeric barcode."})
     while len(upc_string) < 13:
-        upc_string = f"0{upc_string}"
-    print(f"UPC REQUESTED FROM OPENFOODFACTS: {str(upc_string)}")
-    product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
+        upc_string_padded = f"0{upc_string}"
+    print(f"UPC REQUESTED FROM OPENFOODFACTS: {str(upc_string_padded)}")
+    product_info = mongo.db.openfoodfacts.find_one({"code": upc_string_padded})
 #    print(type(product_info))
     if product_info:
         print(f"Product categories: {product_info['categories']}")
