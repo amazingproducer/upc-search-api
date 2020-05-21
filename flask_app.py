@@ -13,8 +13,7 @@ USE_PRODUCT_USERFIELDS = True # Setting to True requires grocy product userfield
 
 app = Flask("__name__")
 app.config['JSON_SORT_KEYS'] = False #Because ordered data is pretty data too
-#app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
-app.config["MONGO_URI"] = "mongodb://10.8.0.55:27017/upc-data"
+app.config["MONGO_URI"] = "mongodb://127.0.0.1:27017/upc-data"
 mongo = PyMongo(app)
 
 fk_file = open('./foodkeeper.json', 'r')
