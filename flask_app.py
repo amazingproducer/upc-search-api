@@ -78,7 +78,7 @@ def match_foodkeeper_product(query):
     best_match_rate = 0
     best_match_entry = None
     matching_entries = {}
-    print(f"Scanned product to search: {query}")
+#    print(f"Scanned product to search: {query}")
     for i in fk_products:
         for j in i:
             if 'Keywords' in j.keys():
@@ -231,7 +231,7 @@ def lookup_off(upc_string):
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
 #    print(type(product_info))
     if product_info:
-        print(product_info['categories'])
+        print(f"Product categories: {product_info['categories']}")
 #        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["product_name"]} {" ".join(product_info["_keywords"])}'), dsr=request.args.get('s', default = 'avg', type = str)) }
         basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["categories_hierarchy"][-1].split(":")[1]}'), dsr=request.args.get('s', default = 'avg', type = str)) }
         print(basic_info)
