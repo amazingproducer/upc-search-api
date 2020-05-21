@@ -121,7 +121,7 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
     m_ratio = {"Days":1, "Weeks":7, "Months":30, "Years":365}
     for i in fk_products:
         if i[0]["ID"] == id:
-#            print(i)
+            print(i)
             for j in i:
                 for k in j.keys():
                     for l in ["Pantry_Min", "Pantry_Max", "Pantry_Metric"]:
