@@ -219,7 +219,9 @@ def lookup_usda(upc_string):
             for k in j:   # omg this is a mess and won't catch multiple nonalpha instances properly
                 print(k)
                 if not k.isalpha():
-                    upc_category[upc_category.index(j)] = upc_category[upc_category.index(j)].replace(str(k), " ")
+                    c_list.append(j.replace(k, " "))
+                    break
+#                    upc_category[upc_category.index(j)] = upc_category[upc_category.index(j)].replace(str(k), " ")
             c_list.append(j)
         upc_category = " ".join(c_list)
         upc_cat_singular = []
