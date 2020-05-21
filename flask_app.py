@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify, abort
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 import json
+import inflect
 
 DEFAULT_STORABILITY_RANGE = "min" # Choose from "min", "max", or "avg"
 USE_PRODUCT_USERFIELDS = True # Setting to True requires grocy product userfields:
@@ -233,7 +234,7 @@ def lookup_off(upc_string):
     if product_info:
         print(f"Product categories: {product_info['categories']}")
 #        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["product_name"]} {" ".join(product_info["_keywords"])}'), dsr=request.args.get('s', default = 'avg', type = str)) }
-        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["categories_hierarchy"][-1].split(":")[1]}'), dsr=request.args.get('s', default = 'avg', type = str)) }
+        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{inflect.engine().singular(product_info["categories_hierarchy"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str)) } # refactor this and catch errors when getting hierarchy
         print(basic_info)
         basic_info["result"]["code"] = str(upc_string)
         basic_info["result"]["product_name"] = product_info["product_name"]
