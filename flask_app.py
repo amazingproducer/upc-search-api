@@ -212,19 +212,20 @@ def lookup_usda(upc_string):
         upc_brand = upc_data["brand_owner"]
         upc_category = upc_data["branded_food_category"].split() # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
         c_list = []
-        for j in upc_category:
-            word = ""
+        for j in upc_category: # clean category array
             if len(j) == 1:
                 upc_category.remove(j)
-            for k in j:
+            for k in j:   # omg this is a mess and won't catch multiple nonalpha instances properly
                 if not k.isalpha():
-                    word.append(" ")
-                else:
-                    word.append(k)
-            c_list.append(s.singular_noun("".join(word)))
-#            c_list.append(s.singular_noun(j))
+                    upc_category[upc_category.index(k)] = upc_category[upc_category.index(k)].replace(k, " ")
+            c_list.append(j)
         upc_category = " ".join(c_list)
-        print(f"Cleaned category strings: {upc_category}")
+        upc_cat_singular = []
+        for l in upc_category.split():
+            upc_cat_singular.append(s.singular_noun(l.strip()))
+        upc_category = " ".join(upc_cat_singular) # this is shameful
+
+        print(f"Cleaned category value: {upc_category}")
         basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(f"{upc_category} {upc_name}"), dsr=request.args.get('s', default = 'avg', type = str))}
         basic_info["result"]["code"] = upc_string 
         basic_info["result"]["product_name"] =  f'{upc_brand} {upc_name["description"]}'
