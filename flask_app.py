@@ -31,9 +31,9 @@ for i in fk_products:
         if 'Keywords' in j.keys():
             fk_keywords.append(j['Keywords']) # this makes a list of keyword sets, but some keyword sets are strikingly similar
 
-for i in fk_categories:
-    for j in i:
-        print(i)
+#for i in fk_categories:
+#    for j in i:
+#        print(i)
 
 def check_input(upc_string):
     if upc_string.isnumeric():
@@ -328,8 +328,8 @@ def grocy_barcode_name_search(upc_string):
 
 
 
-#get_storability(match_foodkeeper_product("Yoplait Original Harvest Peach Low Fat Yogurt"))
-
+get_storability(match_foodkeeper_product("Yoplait Original Harvest Peach Low Fat Yogurt")[0])
+get_storability(552.0)
 #get_storability(match_foodkeeper_product("Best Foods Mayonnaise, 32 oz."))
 
 #grocy_barcode_name_search("070470290614")
