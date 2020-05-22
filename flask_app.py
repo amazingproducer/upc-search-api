@@ -280,7 +280,7 @@ def lookup_off(upc_string):
             for i in range(len(c_h)):
                 c_q = " ".join(c_h[0:i])
                 c_r = match_foodkeeper_product(c_q)
-                if c_r[0] and c_r[1] and c_r[1] > c_s[1]:
+                if c_r[0]!=None and c_r[1]!=None and c_r[1] > c_s[1]:
                     c_s = c_r
                     c_stor = get_storability(c_s[0], dsr=request.args.get('s', default = 'avg', type = str))
             print(f"Product categories: {product_info['categories_hierarchy']}")
