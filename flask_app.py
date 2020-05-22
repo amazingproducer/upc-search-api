@@ -276,7 +276,7 @@ def lookup_off(upc_string):
             for i in range(len(c_h)):
                 c_q = " ".join(c_h[0:i])
                 c_r = match_foodkeeper_product(c_q)
-                if c_r and c_r[1] > c_s[1]:
+                if c_r[1] and c_r[1] > c_s[1]:
 #                    print(c_r, c_s)
                     c_s = c_r
 #                    print(c_r, c_s)
