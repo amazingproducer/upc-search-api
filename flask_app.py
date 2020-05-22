@@ -106,7 +106,7 @@ def match_foodkeeper_product(query):
 #    print(f"Match rate: {best_match_rate}")
     if best_match_rate > 50:
         print(f"Best match: {best_match_name} ({best_match_rate}% confidence)")
-        return best_match_entry
+        return [best_match_entry, best_match_rate]
     else:
         print("Best match: None")
         return None
@@ -198,7 +198,7 @@ def lookup_uhtt(upc_string):
             if not i.isalpha():
                 u_name.remove(i)
         upc_name = " ".join(u_name)
-        basic_info = {"source": "UHTT", "result": get_storability(match_foodkeeper_product(upc_name), dsr=request.args.get('s', default = 'avg', type = str)) }
+        basic_info = {"source": "UHTT", "result": get_storability(match_foodkeeper_product(upc_name)[0], dsr=request.args.get('s', default = 'avg', type = str)) }
         basic_info["result"]["code"] = upc_string
         basic_info["result"]["product_name"] = upc_info["Name"]
         return jsonify(basic_info), 200
@@ -250,7 +250,7 @@ def lookup_usda(upc_string):
 #        print(f"Cleaned category value: {upc_category}")
 #        print(F"UPC Name: {upc_name}")
 #        print(get_storability(match_foodkeeper_product(f"{upc_category}"), dsr=request.args.get('s', default = 'avg', type = str)))
-        basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(f"{upc_category}"), dsr=request.args.get('s', default = 'avg', type = str))}
+        basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(f"{upc_category}")[0], dsr=request.args.get('s', default = 'avg', type = str))}
         basic_info["result"]["code"] = upc_string 
         basic_info["result"]["product_name"] =  f'{upc_brand} {upc_name["description"]}'
 #        print(jsonify(basic_info))
@@ -270,12 +270,22 @@ def lookup_off(upc_string):
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
 #    print(type(product_info))
     if product_info:
+        c_stor = None
         if "categories_hierarchy" in product_info.keys():
+            c_stor = None
+            c_s = 0
+            c_h = product_info["categories_hierarchy"][::-1]
+            for i in range(len(c_h)):
+                c_h[i] = s.singular_noun(c_h[i].split(":")[1])
+            for i in range(len(c_h)):
+                c_q = " ".join(c_h[0:i])
+                c_r = match_foodkeeper_product(c_q)
+                if c_r[0] and c_r[1] > c_s[1]:
+                    c_s = c_r
+                    c_stor = get_storability(c_s[0], dsr=request.args.get('s', default = 'avg', type = str))
             print(f"Product categories: {product_info['categories_hierarchy']}")
-            c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["categories_hierarchy"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str))
-#        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["product_name"]} {" ".join(product_info["_keywords"])}'), dsr=request.args.get('s', default = 'avg', type = str)) }
         else:
-            c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"])}'), dsr=request.args.get('s', default = 'avg', type = str))
+            c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"])}')[0], dsr=request.args.get('s', default = 'avg', type = str))
         basic_info = {"source": "OpenFoodFacts", "result": c_stor } # refactor this and catch errors when getting hierarchy
         print(basic_info)
         basic_info["result"]["code"] = str(upc_orig)
