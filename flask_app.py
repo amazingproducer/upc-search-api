@@ -192,7 +192,7 @@ def lookup_uhtt(upc_string):
         print(f"UHTT Result: {upc_info}")
         u_name = upc_info["Name"].split()
         for i in u_name:
-            if i.lower() == upc_info['BrandName'].lower()
+            if i.lower() == upc_info['BrandName'].lower():
                 u_name.remove(i)
             if not i.isalpha():
                 u_name.remove(i)
