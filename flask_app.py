@@ -262,6 +262,7 @@ def lookup_off(upc_string):
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
 #    print(type(product_info))
     if product_info:
+        print(f"Product Info: {product_info}")
         print(f"Product categories: {product_info['categories']}")
 #        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["product_name"]} {" ".join(product_info["_keywords"])}'), dsr=request.args.get('s', default = 'avg', type = str)) }
         basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["categories_hierarchy"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str)) } # refactor this and catch errors when getting hierarchy
