@@ -79,6 +79,7 @@ def match_foodkeeper_category(query):
 def match_foodkeeper_product(query):
     # Do some fuzzy searching through foodkeeper's categories and products
     # in order to find a match for our product query.
+    print(f"Search query: {query}")
     best_match_rate = 0
     best_match_entry = None
     matching_entries = {}
