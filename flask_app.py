@@ -273,7 +273,7 @@ def lookup_off(upc_string):
         c_stor = None
         if "categories_hierarchy" in product_info.keys():
             c_stor = None
-            c_s = 0
+            c_s = [None, 0]
             c_h = product_info["categories_hierarchy"][::-1]
             for i in range(len(c_h)):
                 c_h[i] = s.singular_noun(c_h[i].split(":")[1])
