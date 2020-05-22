@@ -267,7 +267,7 @@ def lookup_off(upc_string):
             c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["categories_hierarchy"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str))
 #        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["product_name"]} {" ".join(product_info["_keywords"])}'), dsr=request.args.get('s', default = 'avg', type = str)) }
         else:
-            c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str))
+            c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"])}'), dsr=request.args.get('s', default = 'avg', type = str))
         basic_info = {"source": "OpenFoodFacts", "result": c_stor } # refactor this and catch errors when getting hierarchy
         print(basic_info)
         basic_info["result"]["code"] = str(upc_orig)
