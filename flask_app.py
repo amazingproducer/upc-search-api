@@ -31,15 +31,6 @@ for i in fk_products:
         if 'Keywords' in j.keys():
             fk_keywords.append(j['Keywords']) # this makes a list of keyword sets, but some keyword sets are strikingly similar
 
-for i in fk_products:
-    for j in i:
-        if "ID" in j.keys():
-            if j["ID"] == 552.0:
-                print(i)
-#for i in fk_categories:
-#    for j in i:
-#        print(i)
-
 def check_input(upc_string):
     if upc_string.isnumeric():
         return True
@@ -286,11 +277,11 @@ def lookup_off(upc_string):
                 c_q = " ".join(c_h[0:i])
                 c_r = match_foodkeeper_product(c_q)
                 if c_r and c_r[1] > c_s[1]:
-                    print(c_r, c_s)
+#                    print(c_r, c_s)
                     c_s = c_r
-                    print(c_r, c_s)
+#                    print(c_r, c_s)
                     c_stor = get_storability(float(c_r[0]), dsr=request.args.get('s', default = 'avg', type = str))
-                    print(c_stor)
+#                    print(c_stor)
             print(f"Product categories: {product_info['categories_hierarchy']}")
         else:
             c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"])}')[0], dsr=request.args.get('s', default = 'avg', type = str))
@@ -334,7 +325,7 @@ def grocy_barcode_name_search(upc_string):
 
 
 #get_storability(match_foodkeeper_product("Yoplait Original Harvest Peach Low Fat Yogurt")[0])
-get_storability(552.0)
+#get_storability(552.0)
 #get_storability(match_foodkeeper_product("Best Foods Mayonnaise, 32 oz."))
 
 #grocy_barcode_name_search("070470290614")
