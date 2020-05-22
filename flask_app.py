@@ -189,6 +189,7 @@ def lookup_uhtt(upc_string):
     print(f"UPC REQUESTED FROM UHTT: {upc_string}")
     upc_info = mongo.db.uhtt.find_one({"UPCEAN": int(upc_string)})
     if upc_info:
+        print(f"UHTT Result: {upc_info}")
         basic_info = {"source": "UHTT", "result": get_storability(match_foodkeeper_product(upc_info["Name"]), dsr=request.args.get('s', default = 'avg', type = str)) }
         basic_info["result"]["code"] = upc_string
         basic_info["result"]["product_name"] = upc_info["Name"]
