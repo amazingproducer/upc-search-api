@@ -97,7 +97,7 @@ def match_foodkeeper_product(query):
                         best_match_name = i[2]['Name']
                     else:
                         best_match_name = f"{i[2]['Name']} ({i[3]['Name_subtitle']})"
-    if len(matching_entries):
+#    if len(matching_entries):
 #        print(f"Search matches: {matching_entries}")
 #    print(f"Match rate: {best_match_rate}")
     if best_match_rate > 50:
