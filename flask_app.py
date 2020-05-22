@@ -328,7 +328,7 @@ def grocy_barcode_name_search(upc_string):
 
 
 
-get_storability(match_foodkeeper_product("Yoplait Original Harvest Peach Low Fat Yogurt")[0])
+#get_storability(match_foodkeeper_product("Yoplait Original Harvest Peach Low Fat Yogurt")[0])
 get_storability(552.0)
 #get_storability(match_foodkeeper_product("Best Foods Mayonnaise, 32 oz."))
 
