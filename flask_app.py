@@ -285,6 +285,7 @@ def lookup_off(upc_string):
             print(f"Product categories: {product_info['categories_hierarchy']}")
         else:
             c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"])}')[0], dsr=request.args.get('s', default = 'avg', type = str))
+        print(f"c_stor is {c_stor}")
         basic_info = {"source": "OpenFoodFacts", "result": c_stor } # refactor this and catch errors when getting hierarchy
         print(basic_info)
         basic_info["result"]["code"] = str(upc_orig)
