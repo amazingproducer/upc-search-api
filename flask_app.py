@@ -35,7 +35,7 @@ for i in fk_products:
     for j in i:
         if "ID" in j.keys():
             if j["ID"] == 552.0:
-                print(j)
+                print(i)
 #for i in fk_categories:
 #    for j in i:
 #        print(i)
