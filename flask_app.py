@@ -75,7 +75,7 @@ def match_foodkeeper_category(query):
 def match_foodkeeper_product(query):
     # Do some fuzzy searching through foodkeeper's categories and products
     # in order to find a match for our product query.
-    print(f"Search query: {query}")
+#    print(f"Search query: {query}")
     best_match_rate = 0
     best_match_entry = None
     matching_entries = {}
@@ -101,10 +101,10 @@ def match_foodkeeper_product(query):
         print(f"Search matches: {matching_entries}")
 #    print(f"Match rate: {best_match_rate}")
     if best_match_rate > 50:
-        print(f"Best match: {best_match_name} ({best_match_rate}% confidence)")
+#        print(f"Best match: {best_match_name} ({best_match_rate}% confidence)")
         return [best_match_entry, best_match_rate]
     else:
-        print("Best match: None")
+#        print("Best match: None")
         return [None, None]
 
 def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
