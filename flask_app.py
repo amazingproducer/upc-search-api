@@ -262,12 +262,13 @@ def lookup_off(upc_string):
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
 #    print(type(product_info))
     if product_info:
-        if "categories" in product_info.keys():
-            print(f"Product categories: {product_info['categories']}")
         if "categories_hierarchy" in product_info.keys():
             print(f"Product categories: {product_info['categories_hierarchy']}")
+            c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["categories_hierarchy"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str))
 #        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{product_info["product_name"]} {" ".join(product_info["_keywords"])}'), dsr=request.args.get('s', default = 'avg', type = str)) }
-        basic_info = {"source": "OpenFoodFacts", "result": get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["categories_hierarchy"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str)) } # refactor this and catch errors when getting hierarchy
+        else:
+            c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"][-1].split(":")[1])}'), dsr=request.args.get('s', default = 'avg', type = str))
+        basic_info = {"source": "OpenFoodFacts", "result": c_stor } # refactor this and catch errors when getting hierarchy
         print(basic_info)
         basic_info["result"]["code"] = str(upc_orig)
         basic_info["result"]["product_name"] = product_info["product_name"]
