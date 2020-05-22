@@ -281,7 +281,7 @@ def lookup_off(upc_string):
                     c_s = c_r
 #                    print(c_r, c_s)
                     c_stor = get_storability(float(c_r[0]), dsr=request.args.get('s', default = 'avg', type = str))
-#                    print(c_stor)
+                    print(f"c_stor is {c_stor}")
             print(f"Product categories: {product_info['categories_hierarchy']}")
         else:
             c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"])}')[0], dsr=request.args.get('s', default = 'avg', type = str))
