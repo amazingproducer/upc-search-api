@@ -277,10 +277,10 @@ def lookup_off(upc_string):
                 c_q = " ".join(c_h[0:i])
                 c_r = match_foodkeeper_product(c_q)
                 if c_r[1] and c_r[1] > c_s[1]:
-#                    print(c_r, c_s)
+                    print(c_r, c_s)
                     c_s = c_r
-#                    print(c_r, c_s)
-                    c_stor = get_storability(float(c_r[0]), dsr=request.args.get('s', default = 'avg', type = str))
+                    print(c_r, c_s)
+                    c_stor = get_storability(c_r[0], dsr=request.args.get('s', default = 'avg', type = str))
                     print(f"c_stor is {c_stor}")
             print(f"Product categories: {product_info['categories_hierarchy']}")
         else:
