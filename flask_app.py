@@ -105,7 +105,7 @@ def match_foodkeeper_product(query):
         return [best_match_entry, best_match_rate]
     else:
         print("Best match: None")
-        return None
+        return [None, None]
 
 def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
     # TODO get category for product when possible to refine this
