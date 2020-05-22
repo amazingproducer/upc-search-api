@@ -31,6 +31,11 @@ for i in fk_products:
         if 'Keywords' in j.keys():
             fk_keywords.append(j['Keywords']) # this makes a list of keyword sets, but some keyword sets are strikingly similar
 
+for i in fk_products:
+    for j in i:
+        if "ID" in j.keys():
+            if j["ID"] == 552.0
+                print(j)
 #for i in fk_categories:
 #    for j in i:
 #        print(i)
