@@ -221,6 +221,9 @@ def lookup_usda(upc_string):
         print(upc_category)
         for l in upc_category:
             if not l.isalpha(): # Prefer the first field when this value has subfields
+                #prefer cookies over biscuits when given both
+                if "iscuit" in upc_category and "ookie" in upc_category:
+                    upc_category = "Cookie"
                 if l == "&":
                     upc_category = upc_category.split("&")[0]
                 if l == "/":
@@ -264,6 +267,9 @@ def lookup_off(upc_string):
             c_h = product_info["categories_hierarchy"][::-1]
             for i in range(len(c_h)):
                 c_h[i] = s.singular_noun(c_h[i].split(":")[1])
+            # prefer cookies over biscuits in snack categories
+            if "sweet-snack" in c_h and "biscuit" == c_h[0]:
+                c_h[0] = "cookie"
             print(f"Selected Category: {c_h[0]}")
             c_r = match_foodkeeper_product(c_h[0])
             c_stor = get_storability(c_r[0], dsr=request.args.get('s', default = 'avg', type = str))
