@@ -265,7 +265,7 @@ def lookup_off(upc_string):
         upc_string = f"0{upc_string}"
     print(f"UPC REQUESTED FROM OPENFOODFACTS: {str(upc_string)}")
     product_info = mongo.db.openfoodfacts.find_one({"code": upc_string})
-#    print(type(product_info))
+    print(product_info)
     if product_info:
         c_stor = None
         if "categories_hierarchy" in product_info.keys():
