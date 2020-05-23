@@ -153,7 +153,7 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
 #                print("Refrigerate after opening!")
                 s_key = 'default_best_before_days_after_open'
                 if USE_PRODUCT_USERFIELDS:
-                    userfields["refrigerate_after_opening"] = True
+                    userfields["RefrigerateAfterOpening"] = True
                     storability['userfields'] = userfields
             elif "Pantry_M" in list(i[0].keys())[0]:
 #                print("Pantry storage:")
@@ -162,7 +162,7 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
 #                print("Refrigerated storage required!")
                 s_key = 'default_best_before_days'
                 if USE_PRODUCT_USERFIELDS:
-                    userfields['refrigeration_required'] = True
+                    userfields['RefrigerationRequired'] = True
                     storability['userfields'] = userfields
             if metric in m_ratio.keys():
                 if dsr == "min":
