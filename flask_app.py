@@ -215,8 +215,8 @@ def lookup_usda(upc_string):
     if len(fdc_ids) > 0:
         upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
         upc_data = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})
-       print(f"UPC Name data: {upc_name}")
-       print(f"UPC Product data: {upc_data}")
+        print(f"UPC Name data: {upc_name}")
+        print(f"UPC Product data: {upc_data}")
         upc_brand = upc_data["brand_owner"]
         upc_category = upc_data["branded_food_category"].split() # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
         c_list = []
