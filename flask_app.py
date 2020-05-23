@@ -82,8 +82,8 @@ def match_foodkeeper_product(query):
 #    print(f"Scanned product to search: {query}")
     for i in fk_products:
         for j in i:
-            if 'Keywords' in j.keys():
-                fk_match = fuzz.token_sort_ratio(str(j['Keywords']).lower(), query)
+            if 'Name' in j.keys():
+                fk_match = fuzz.token_sort_ratio(str(j['Name']).lower(), query)
                 if fk_match > 50:
                     if i[3]['Name_subtitle'] == None:
                         match_name = i[2]['Name']
