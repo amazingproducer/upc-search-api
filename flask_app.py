@@ -188,12 +188,14 @@ def lookup_uhtt(upc_string):
     if upc_info:
         print(f"UHTT Result: {upc_info}")
         u_name = upc_info["Name"].split()
+        print(u_name)
         for i in u_name:
             if i.lower() == upc_info['BrandName'].lower():
-                u_name = u_name.remove(i)
+                u_name.remove(i)
             if not i.isalpha():
-                u_name = u_name.remove(i)
+                u_name.remove(i)
         upc_name = " ".join(u_name)
+        print(upc_name)
         basic_info = {"source": "UHTT", "result": get_storability(match_foodkeeper_product(upc_name)[0], dsr=request.args.get('s', default = 'avg', type = str)) }
         basic_info["result"]["code"] = upc_string
         basic_info["result"]["product_name"] = upc_info["Name"]
