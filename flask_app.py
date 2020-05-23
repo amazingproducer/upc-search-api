@@ -202,7 +202,6 @@ def lookup_uhtt(upc_string):
 
 @app.route('/usda/<upc_string>', methods=['GET'])
 def lookup_usda(upc_string):
-    replaced = False
     s = inflect.engine()
     if not check_input(upc_string):
         return jsonify({"error": "expected a numeric barcode."})
@@ -222,18 +221,13 @@ def lookup_usda(upc_string):
         print(upc_category)
         for l in upc_category:
             if not l.isalpha():
-                upc_category = upc_category.replace(l, " ")
+                if l == "&":
+                    upc_category = upc_category.replace(l, " ")
+                if l == "/":
+                    upc_category = upc_category.split("/")[0]
         print(upc_category)
-        for j in upc_category.split(): # clean category array
-            if len(j) == 1:
-                upc_category = upc_category.replace(j, "")
-        print(upc_category)
-#            print(j)
-#        print(f"c_list: {c_list}")
-#        print(f"upc_category: {upc_category}")
-        c_list = upc_category.split()
         upc_cat_singular = []
-        for l in c_list:
+        for l in upc_category.split():
             if s.singular_noun(l.strip()):
                 upc_cat_singular.append(s.singular_noun(l.strip()))
             else:
