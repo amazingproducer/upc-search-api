@@ -218,19 +218,16 @@ def lookup_usda(upc_string):
         print(f"UPC Name data: {upc_name}")
         print(f"UPC Product data: {upc_data}")
         upc_brand = upc_data["brand_owner"]
-        upc_category = upc_data["branded_food_category"].split() # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
-        c_list = []
-        for j in upc_category: # clean category array
-            term = j
+        upc_category = upc_data["branded_food_category"] # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
+        for j in upc_category.split(): # clean category array
             if len(j) == 1:
-                upc_category.remove(j)
+                upc_category.replace(j, "")
 #            print(j)
             for k in j:   # omg this is a mess and won't catch multiple nonalpha instances properly
 #                print(k)
                 if not k.isalpha():
 #                    print(f"Cleanup: removing {k}")
-                    term.replace(k, " ")
-            c_list.append(term)
+                    upc_category.replace(k, " ")
 #        print(f"c_list: {c_list}")
 #        print(f"upc_category: {upc_category}")
         upc_cat_singular = []
