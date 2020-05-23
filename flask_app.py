@@ -200,7 +200,7 @@ def lookup_uhtt(upc_string):
         basic_info["result"]["barcode"] = upc_string
         basic_info["result"]["product_name"] = upc_info["Name"]
         return jsonify(basic_info), 200
-    return jsonify({"source": "UHTT", "result": {"error": "Entry not found", "upc": upc_string}}), 404
+    return jsonify({"source": "UHTT", "result": {"error": "Entry not found", "barcode": upc_string}}), 404
 
 @app.route('/usda/<upc_string>', methods=['GET'])
 def lookup_usda(upc_string):
@@ -248,7 +248,7 @@ def lookup_usda(upc_string):
 #        print(jsonify(basic_info))
         return jsonify(basic_info), 200
 #    abort(404)
-    return jsonify({"source": "USDA", "result": {"error": "Entry not found", "upc": upc_string}}), 404
+    return jsonify({"source": "USDA", "result": {"error": "Entry not found", "barcode": upc_string}}), 404
 
 @app.route('/off/<upc_string>', methods=['GET'])
 def lookup_off(upc_string):
@@ -294,7 +294,7 @@ def lookup_off(upc_string):
         basic_info["result"]["product_name"] = product_info["product_name"]
 #    return mongo.db.product.PyMongo.find_one({"code": upc_string})
         return jsonify(basic_info), 200
-    return jsonify({"source": "OpenFoodFacts", "result": {"error": "Entry not found", "upc": upc_orig}}), 404
+    return jsonify({"source": "OpenFoodFacts", "result": {"error": "Entry not found", "barcode": upc_orig}}), 404
 
 @app.route('/lookup/<upc_string>', methods=['GET'])
 def lookup(upc_string):
@@ -323,7 +323,7 @@ def grocy_barcode_name_search(upc_string):
                     return jsonify(j["result"])
             return jsonify(j["result"])
     if not found:
-        result = {"error": "Entry not found", "upc": upc_string}
+        result = {"error": "Entry not found", "barcode": upc_string}
         return jsonify(result)
 
 
