@@ -215,8 +215,8 @@ def lookup_usda(upc_string):
     if len(fdc_ids) > 0:
         upc_name = mongo.db.usda_name.find({"fdc_id": {"$in": fdc_ids}}).sort([("publication_date", -1)])[0]
         upc_data = mongo.db.usda_upc.find_one({"fdc_id": upc_name["fdc_id"]})
-#        print(f"UPC Name data: {upc_name}")
-#        print(f"UPC Product data: {upc_data}")
+       print(f"UPC Name data: {upc_name}")
+       print(f"UPC Product data: {upc_data}")
         upc_brand = upc_data["brand_owner"]
         upc_category = upc_data["branded_food_category"].split() # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
         c_list = []
@@ -244,9 +244,9 @@ def lookup_usda(upc_string):
                 upc_cat_singular.append(l.strip())
         upc_category = " ".join(upc_cat_singular) # this is shameful
 
-#        print(f"Cleaned category value: {upc_category}")
-#        print(F"UPC Name: {upc_name}")
-#        print(get_storability(match_foodkeeper_product(f"{upc_category}"), dsr=request.args.get('s', default = 'avg', type = str)))
+       print(f"Cleaned category value: {upc_category}")
+       print(F"UPC Name: {upc_name}")
+       print(get_storability(match_foodkeeper_product(f"{upc_category}")[0], dsr=request.args.get('s', default = 'avg', type = str)))
         basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(f"{upc_category}")[0], dsr=request.args.get('s', default = 'avg', type = str))}
         basic_info["result"]["code"] = upc_string 
         basic_info["result"]["product_name"] =  f'{upc_brand} {upc_name["description"]}'
@@ -283,12 +283,12 @@ def lookup_off(upc_string):
 #                    print(c_r, c_s)
                     c_stor = get_storability(c_r[0], dsr=request.args.get('s', default = 'avg', type = str))
 #                    print(f"c_stor is {c_stor}")
-#            print(f"Product categories: {product_info['categories_hierarchy']}")
+            print(f"Product categories: {product_info['categories_hierarchy']}")
         else:
             c_stor = get_storability(match_foodkeeper_product(f'{s.singular_noun(product_info["product_name"])}')[0], dsr=request.args.get('s', default = 'avg', type = str))
 #        print(f"c_stor is {c_stor}")
         basic_info = {"source": "OpenFoodFacts", "result": c_stor } # refactor this and catch errors when getting hierarchy
-#        print(basic_info)
+        print(basic_info)
         basic_info["result"]["code"] = str(upc_orig)
         basic_info["result"]["product_name"] = product_info["product_name"]
 #    return mongo.db.product.PyMongo.find_one({"code": upc_string})
