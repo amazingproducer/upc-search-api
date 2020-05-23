@@ -220,9 +220,9 @@ def lookup_usda(upc_string):
         upc_category = str(upc_data["branded_food_category"]) # we want to clean this value, then convert nouns to singular form before using as a foodkeeper query
         print(upc_category)
         for l in upc_category:
-            if not l.isalpha():
+            if not l.isalpha(): # Prefer the first field when this value has subfields
                 if l == "&":
-                    upc_category = upc_category.replace(l, " ")
+                    upc_category = upc_category.split("&")[0]
                 if l == "/":
                     upc_category = upc_category.split("/")[0]
         print(upc_category)
