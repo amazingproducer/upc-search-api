@@ -166,13 +166,13 @@ def get_storability(id, dsr=DEFAULT_STORABILITY_RANGE):
                     storability['userfields'] = userfields
             if metric in m_ratio.keys():
                 if dsr == "min":
-                    storability[s_key] = min_i * m_ratio[metric]
+                    storability[s_key] = int(min_i * m_ratio[metric])
 #                    print(f"{min_i} {metric}")
                 if dsr == "max":
-                    storability[s_key] = max_i * m_ratio[metric]
+                    storability[s_key] = int(max_i * m_ratio[metric])
 #                    print(f"{max_i} {metric}")
                 if dsr == "avg":
-                    storability[s_key] = avg_i * m_ratio[metric]
+                    storability[s_key] = int(avg_i * m_ratio[metric])
 #                    print(f"{avg_i} {metric}")
             else:
                 return {"Error": "Unsupported storability metric."}
