@@ -311,15 +311,16 @@ def grocy_barcode_name_search(upc_string):
     if not check_input(upc_string):
         return jsonify({"error": "expected a numeric barcode."})
     found = None
+    found_storability = None
     sources = [lookup_off, lookup_usda, lookup_uhtt]
     for source in sources:
         j = source(upc_string)[0].get_json()
         if ("error" not in j["result"]) and (not found):
             found = True
-            # p_name = j["result"]["product_name"]
-            # result = get_storability(match_foodkeeper_product(p_name))
-            # result["product_name"] = p_name
-            #result["upc"] = upc_string
+            for i in j["result"]:
+                if "default_best_before_days" in i:
+                    found_storability = True
+                    return jsonify(j["result"])
             return jsonify(j["result"])
     if not found:
         result = {"error": "Entry not found", "upc": upc_string}
