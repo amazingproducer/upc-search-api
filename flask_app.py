@@ -222,11 +222,11 @@ def lookup_usda(upc_string):
         print(upc_category)
         for l in upc_category:
             if not l.isalpha():
-                upc_category.replace(l, " ")
+                upc_category = upc_category.replace(l, " ")
         print(upc_category)
         for j in upc_category.split(): # clean category array
             if len(j) == 1:
-                upc_category.replace(j, "")
+                upc_category = upc_category.replace(j, "")
         print(upc_category)
 #            print(j)
 #        print(f"c_list: {c_list}")
