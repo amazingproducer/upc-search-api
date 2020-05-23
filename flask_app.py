@@ -244,9 +244,9 @@ def lookup_usda(upc_string):
                 upc_cat_singular.append(l.strip())
         upc_category = " ".join(upc_cat_singular) # this is shameful
 
-       print(f"Cleaned category value: {upc_category}")
-       print(F"UPC Name: {upc_name}")
-       print(get_storability(match_foodkeeper_product(f"{upc_category}")[0], dsr=request.args.get('s', default = 'avg', type = str)))
+        print(f"Cleaned category value: {upc_category}")
+        print(F"UPC Name: {upc_name}")
+        print(get_storability(match_foodkeeper_product(f"{upc_category}")[0], dsr=request.args.get('s', default = 'avg', type = str)))
         basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(f"{upc_category}")[0], dsr=request.args.get('s', default = 'avg', type = str))}
         basic_info["result"]["code"] = upc_string 
         basic_info["result"]["product_name"] =  f'{upc_brand} {upc_name["description"]}'
