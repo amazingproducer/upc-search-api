@@ -230,6 +230,7 @@ def lookup_usda(upc_string):
                     upc_category.replace(k, " ")
 #        print(f"c_list: {c_list}")
 #        print(f"upc_category: {upc_category}")
+        c_list = upc_category.split()
         upc_cat_singular = []
         for l in c_list:
             if s.singular_noun(l.strip()):
