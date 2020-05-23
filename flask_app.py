@@ -224,20 +224,12 @@ def lookup_usda(upc_string):
             if len(j) == 1:
                 upc_category.remove(j)
 #            print(j)
-            for k in j:   # omg this is a mess and won't catch multiple nonalpha instances properly
-#                print(k)
-                if not k.isalpha():
-#                    print(f"Cleanup: removing {k}")
-                    c_list.append(j.replace(k, " "))
-                    replaced = True
-            if not replaced:
+            else:
                 c_list.append(j)
-                replaced = False
 #        print(f"c_list: {c_list}")
-        upc_category = " ".join(c_list)
 #        print(f"upc_category: {upc_category}")
         upc_cat_singular = []
-        for l in upc_category.split():
+        for l in c_list:
             if s.singular_noun(l.strip()):
                 upc_cat_singular.append(s.singular_noun(l.strip()))
             else:
