@@ -197,7 +197,7 @@ def lookup_uhtt(upc_string):
         upc_name = " ".join(u_name)
         print(upc_name)
         basic_info = {"source": "UHTT", "result": get_storability(match_foodkeeper_product(upc_name)[0], dsr=request.args.get('s', default = 'avg', type = str)) }
-        basic_info["result"]["code"] = upc_string
+        basic_info["result"]["barcode"] = upc_string
         basic_info["result"]["product_name"] = upc_info["Name"]
         return jsonify(basic_info), 200
     return jsonify({"source": "UHTT", "result": {"error": "Entry not found", "upc": upc_string}}), 404
@@ -243,7 +243,7 @@ def lookup_usda(upc_string):
         print(F"UPC Name: {upc_name}")
         print(get_storability(match_foodkeeper_product(f"{upc_category}")[0], dsr=request.args.get('s', default = 'avg', type = str)))
         basic_info = {"source": "USDA", "result": get_storability(match_foodkeeper_product(f"{upc_category}")[0], dsr=request.args.get('s', default = 'avg', type = str))}
-        basic_info["result"]["code"] = upc_string 
+        basic_info["result"]["barcode"] = upc_string 
         basic_info["result"]["product_name"] =  f'{upc_brand} {upc_name["description"]}'
 #        print(jsonify(basic_info))
         return jsonify(basic_info), 200
@@ -290,7 +290,7 @@ def lookup_off(upc_string):
 #        print(f"c_stor is {c_stor}")
         basic_info = {"source": "OpenFoodFacts", "result": c_stor } # refactor this and catch errors when getting hierarchy
         print(basic_info)
-        basic_info["result"]["code"] = str(upc_orig)
+        basic_info["result"]["barcode"] = str(upc_orig)
         basic_info["result"]["product_name"] = product_info["product_name"]
 #    return mongo.db.product.PyMongo.find_one({"code": upc_string})
         return jsonify(basic_info), 200
