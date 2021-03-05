@@ -1,3 +1,3 @@
 # grocy-upc-lookup-api
 
-API which searches one or more databases to return product info for a given UPC.
+HTTP API which searches through several datasets to return product info for a given UPC.
