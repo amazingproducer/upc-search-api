@@ -12,16 +12,29 @@ from datetime import datetime as dt
 
 
 
-import psycopg2
+### sqlalchemy basics
+from sqlalchemy import create_engine
 
 from os import getenv
-upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 
-connection = None
-try: 
-    connection = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_dataset')
-except:
-    print('DB connection failed.')
+upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
+engine = create_engine(f'postgresql://barcodeserver:{upc_DATABASE_KEY}@10.0.8.55/upc_dataset')
+
+
+# ### psycopg2 basics
+# import psycopg2
+
+# from os import getenv
+# upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
+
+# connection = None
+# try: 
+#     connection = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_dataset')
+# except:
+#     print('DB connection failed.')
+
+
+
 
 # if connection is not None:
 #     connection.autocommit = True
@@ -128,11 +141,6 @@ food_names = []
 food_data = []
 row_count = None
 
-#fieldnames = ["fdc_id", "upc", "product_name", "serving_size", "serving_size_unit", "modified_date", "publication_date"]
-#newfile = open('newfile.csv', 'w')
-#nd_w = csv.DictWriter(newfile, fieldnames=fieldnames)
-#nd_w.writeHeader()
-
 with open('food.csv', 'r') as fn_file:
     fn = csv.DictReader(fn_file)
     for row in fn:
@@ -163,3 +171,9 @@ with open('branded_food.csv', 'r') as bf_file:
                 break
     end_time = dt.now()
     print(f"Elapsed time: {end_time - start_time}")
+
+with open('newfile.csv', 'w') as newfile:
+    fieldnames = ["fdc_id", "upc", "product_name", "serving_size", "serving_size_unit", "modified_date", "publication_date"]
+    nd_w = csv.DictWriter(newfile, fieldnames=fieldnames)
+    nd_w.writeheader()
+    nd_w.writerows(food_data)
