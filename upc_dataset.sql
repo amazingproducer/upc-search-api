@@ -1,12 +1,8 @@
-CREATE DATABASE upc_dataset;
-
-\c upc_dataset
-
 CREATE TYPE upc_data_source AS ENUM ('usda', 'uhtt', 'off');
 
 CREATE TABLE dataset_source_meta
 (
-    source_id                       serial PRIMARY KEY,
+    id                              serial PRIMARY KEY,
     source_name                     upc_data_source,
     refresh_check_url               TEXT NOT NULL,
     current_version_hash            TEXT,
@@ -18,7 +14,7 @@ CREATE TABLE dataset_source_meta
 
 CREATE TABLE product_info
 (
-    entry_id                        serial PRIMARY KEY,
+    id                              serial PRIMARY KEY,
     source                          upc_data_source,
     source_item_id                  text,
     upc                             varchar(13),
@@ -31,16 +27,16 @@ CREATE TABLE product_info
     serving_unit                    text,
     CONSTRAINT check_numeric CHECK (upc ~ '^[0-9]*$'),
     CONSTRAINT check_length CHECK (length(upc) >= 12),
-    CONSTRAINT check_unique_composite UNIQUE (upc, source, source_entry_date)
+    CONSTRAINT check_unique_composite UNIQUE (upc, source, db_entry_date)
 );
 
-INSERT INTO dataset_source_meta VALUES 
+INSERT INTO dataset_source_meta (source_name, refresh_check_url, current_version_url) VALUES 
 (
-    'off', 'https://static.openfoodfacts.org/data/sha256sum', '', 'https://static.openfoodfacts.org/data/openfoodfacts-mongodbdump.tar.gz', '', '', ''
+    'off', 'https://static.openfoodfacts.org/data/sha256sum', 'https://static.openfoodfacts.org/data/openfoodfacts-mongodbdump.tar.gz'
 ),
 (
-    'usda', 'https://fdc.nal.usda.gov/fdc-datasets/', '', '', '', '', ''
+    'usda', 'https://fdc.nal.usda.gov/fdc-datasets/', NULL
 ),
 (
-    'uhtt', 'https://api.github.com/repos/papyrussolution/UhttBarcodeReference/releases', '', '', '', '', ''
+    'uhtt', 'https://api.github.com/repos/papyrussolution/UhttBarcodeReference/releases', NULL
 );

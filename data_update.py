@@ -19,30 +19,40 @@ if version < (3, 6):
 
 
 ### sqlalchemy basics
-from sqlalchemy import create_engine
+# from sqlalchemy import create_engine
 
-from os import getenv
-upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
-engine = create_engine(f'postgresql://barcodeserver:{upc_DATABASE_KEY}@10.0.8.55/upc_dataset')
+# from os import getenv
+# upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
+# engine = create_engine(f'postgresql://barcodeserver:{upc_DATABASE_KEY}@10.0.8.55/upc_dataset')
 
 
 
 
 # ### psycopg2 basics
-# import psycopg2
+import psycopg2
 
-# from os import getenv
-# upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
+from os import getenv
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 
-# connection = None
-# try: 
-#     connection = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_dataset')
-# except:
-#     print('DB connection failed.')
+connection = None
+try: 
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+except:
+    print('DB connection failed.')
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='postgres')
+    db_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    with db_conn.cursor() as db_cur:
+        db_cur.execute('CREATE DATABASE upc_data')
+    db_conn.close()
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
 
+with db_conn.cursor() as db_cur:
+    with open('upc_dataset.sql', 'r') as sqlfile:
+        db_cur.execute(sqlfile.read())
+        db_conn.commit()
 
-
-
+### check for a database:
 # if connection is not None:
 #     connection.autocommit = True
 #     cur = connection.cursor()
@@ -55,11 +65,6 @@ engine = create_engine(f'postgresql://barcodeserver:{upc_DATABASE_KEY}@10.0.8.55
 #         print("Database not found.")
 #     connection.close()
 #     print('Done')
-
-
-
-
-
 
 
 ### GET INFO ABOUT OPENFOODFACTS DATA
