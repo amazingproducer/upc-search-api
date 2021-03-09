@@ -18,14 +18,17 @@ CREATE TABLE dataset_source_meta
 
 CREATE TABLE product_info
 (
-    entry_id                serial PRIMARY KEY,
-    upc                     varchar(13),
-    source                  upc_data_source,
-    source_entry_date       date NOT NULL,
-    name                    text NOT NULL,
-    category                text,
-    serving_size            numeric,
-    serving_unit            text,
+    entry_id                    serial PRIMARY KEY,
+    source                      upc_data_source,
+    source_item_id              text,
+    upc                         varchar(13),
+    name                        text NOT NULL,
+    category                    text,
+    db_entry_date               date NOT NULL,
+    source_item_submission_date date,
+    source_item_publish_date    date,
+    serving_size                numeric,
+    serving_unit                text,
     CONSTRAINT check_numeric CHECK (upc ~ '^[0-9]*$'),
     CONSTRAINT check_length CHECK (length(upc) >= 12),
     CONSTRAINT check_unique_composite UNIQUE (upc, source, source_entry_date)

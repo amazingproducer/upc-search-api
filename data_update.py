@@ -121,7 +121,8 @@ for i in USDAIndexParser.dataset_list:
 print(f"Compare the following URL with the URL retained during the last update: {latest_url}")
 
 ### TODO: grab the latest archive and extract it. 
-### wget -O- $DATASET_URL | bsdtar -xf- -T USDA_filenames
+### DATASET_URL = "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_csv_2020-10-30.zip"
+### wget -O- $DATASET_URL | bsdtar -xf- -T USDA_FILES
 
 
 ### process acquired USDA files for later updating
@@ -177,3 +178,15 @@ with open('newfile.csv', 'w') as newfile:
     nd_w = csv.DictWriter(newfile, fieldnames=fieldnames)
     nd_w.writeheader()
     nd_w.writerows(food_data)
+
+fieldnames = [
+    "source",
+    "source_item_id",
+    "upc",
+    "product_name",
+    "product_category",
+    "serving_size",
+    "serving_size_unit",
+    "submission_date",
+    "publication_date"
+]
