@@ -17,18 +17,20 @@ CREATE TABLE product_info
     id                              serial PRIMARY KEY,
     source                          upc_data_source,
     source_item_id                  text,
-    upc                             varchar(13),
+    upc                             varchar(14),
     name                            text NOT NULL,
     category                        text,
     db_entry_date                   date NOT NULL,
     source_item_submission_date     date,
     source_item_publication_date    date,
     serving_size                    numeric,
-    serving_unit                    text,
+    serving_size_unit               text,
     CONSTRAINT check_numeric CHECK (upc ~ '^[0-9]*$'),
     CONSTRAINT check_length CHECK (length(upc) >= 12),
-    CONSTRAINT check_unique_composite UNIQUE (upc, source, db_entry_date)
+    CONSTRAINT check_unique_composite UNIQUE (upc, source, source_item_publication_date)
 );
+
+CREATE INDEX idx_product_info ON product_info (source, upc, source_item_publication_date);
 
 INSERT INTO dataset_source_meta (source_name, refresh_check_url, current_version_url) VALUES 
 (
