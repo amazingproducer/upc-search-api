@@ -168,6 +168,7 @@ fieldnames = [
 ]
 
 db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+db_conn.autocommit = True
 
 with open('food.csv', 'r') as fn_file:
     fn = csv.DictReader(fn_file)
@@ -199,13 +200,41 @@ with open('branded_food.csv', 'r') as bf_file:
                     f_pn = entry["product_name"]
                     f_pd = entry["publication_date"]
                     with db_conn.cursor() as db_cur:
-                        db_cur.execute(f"""INSERT INTO product_info ({', '.join(fieldnames)}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                        db_cur.execute(f"""
+                        INSERT INTO
+                        product_info ({', '.join(fieldnames)})
+                        VALUES
+                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT ON CONSTRAINT
+                        check_unique_composite
+                        DO
+                        UPDATE SET
+                        source_item_id = EXCLUDED.source_item_id,
+                        name = EXCLUDED.name,
+                        category = EXCLUDED.category,
+                        db_entry_date = EXCLUDED.db_entry_date,
+                        source_item_submission_date = EXCLUDED.source_item_submission_date,
+                        source_item_publication_date = EXCLUDED.source_item_publication_date,
+                        serving_size = EXCLUDED.serving_size,
+                        serving_size_unit = EXCLUDED.serving_size_unit
+                        WHERE
+                        EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
+                        """,
+                        ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu)
+                        )
+
+                        # ('usda', '{f_id}', '{f_upc}', '{f_pn}', '{f_cat}', '{d.today()}', '{f_sd}', '{f_pd}', '{f_ss}', '{f_ssu}')
+
+
+                        # db_cur.execute(f"""INSERT INTO product_info ({', '.join(fieldnames)}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
+                        # ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu))
+
                         # db_cur.execute(f"""INSERT INTO product_info ({', '.join(fieldnames)}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         # ON CONFLICT (upc, source, source_item_publication_date) DO UPDATE
                         # SET source_item_id=%s, name=%s, category=%s, db_entry_date=%s, source_item_submission_date=%s, source_item_publication_date=%s, serving_size=%s, serving_size_unit=%s
                         # WHERE source_item_publication_date > EXCLUDED.source_item_publication_date
                         # ;""",
-                        ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu))
+                        # ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu))
                         db_conn.commit()
                     food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":d.today(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
                     break
