@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 #import SQLAlchemy
 import psycopg2
 import requests
@@ -10,15 +10,22 @@ from urllib.parse import unquote
 from html.parser import HTMLParser
 from datetime import datetime as dt
 
+### subversion check
+from sys import version_info as version
+
+if version < (3, 6):
+    print("Python version 3.6 or greater required.")
+    quit()
 
 
 ### sqlalchemy basics
 from sqlalchemy import create_engine
 
 from os import getenv
-
 upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 engine = create_engine(f'postgresql://barcodeserver:{upc_DATABASE_KEY}@10.0.8.55/upc_dataset')
+
+
 
 
 # ### psycopg2 basics
@@ -118,16 +125,23 @@ for i in USDAIndexParser.dataset_list:
     if latest_date == None or date_object > latest_date:
         latest_date = date_object
         latest_url = i
-print(f"Compare the following URL with the URL retained during the last update: {latest_url}")
+print(f"Retain and compare the following URL with the URL retained during the last update: {latest_url}")
 
-### TODO: grab the latest archive and extract it. 
-### DATASET_URL = "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_csv_2020-10-30.zip"
-### wget -O- $DATASET_URL | bsdtar -xf- -T USDA_FILES
+## grab the latest archive and extract it. 
+import subprocess
+
+USDA_DATASET_URL = "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_csv_2020-10-30.zip"
+usda_sp = subprocess.run(["./get_USDA_update.sh", USDA_DATASET_URL])
+if usda_sp.returncode == 0:
+    print("USDA Data Update Acquired.")
+else:
+    print(f"USDA Data Update Failed (exit code {sp.returncode}).")
 
 
 ### process acquired USDA files for later updating
 # turn files into objects for later insertion
 import csv
+from datetime import datetime as dt
 
 fn_file = open('food.csv', 'r')
 fn = csv.DictReader(fn_file)
@@ -135,9 +149,6 @@ fn = csv.DictReader(fn_file)
 bf_file = open('branded_food.csv', 'r')
 bf = csv.DictReader(bf_file)
 
-
-import csv
-from datetime import datetime as dt
 food_names = []
 food_data = []
 row_count = None
@@ -157,9 +168,10 @@ with open('branded_food.csv', 'r') as bf_file:
     for row in bf:
         f_id = row["fdc_id"]
         f_upc = row["gtin_upc"]
+        f_cat = row["branded_food_category"]
         f_ss = row["serving_size"]
         f_ssu = row["serving_size_unit"]
-        f_bf_md = row["modified_date"]
+        f_sd = row["available_date"]
         count += 1
         if not count % 1000:
             current_time = dt.now()
@@ -167,11 +179,12 @@ with open('branded_food.csv', 'r') as bf_file:
         for entry in food_names:
             if entry["fdc_id"] == f_id:
                 f_pn = entry["product_name"]
-                f_fn_pd = entry["publication_date"]
-                food_data.append({"fdc_id":f_id, "upc":f_upc, "product_name":f_pn, "serving_size":f_ss, "serving_size_unit":f_ssu, "modified_date":f_bf_md, "publication_date":f_fn_pd})
+                f_pd = entry["publication_date"]
+                food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":dt.now(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
                 break
     end_time = dt.now()
     print(f"Elapsed time: {end_time - start_time}")
+
 
 with open('newfile.csv', 'w') as newfile:
     fieldnames = ["fdc_id", "upc", "product_name", "serving_size", "serving_size_unit", "modified_date", "publication_date"]
