@@ -25,6 +25,7 @@ CREATE TABLE product_info
     source_item_publication_date    date,
     serving_size                    numeric,
     serving_size_unit               text,
+    serving_size_fulltext           text,
     CONSTRAINT check_numeric CHECK (upc ~ '^[0-9]*$'),
     CONSTRAINT check_length CHECK (length(upc) >= 12),
     CONSTRAINT check_unique_composite UNIQUE (upc, source)
