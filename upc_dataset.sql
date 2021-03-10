@@ -27,7 +27,7 @@ CREATE TABLE product_info
     serving_size_unit               text,
     CONSTRAINT check_numeric CHECK (upc ~ '^[0-9]*$'),
     CONSTRAINT check_length CHECK (length(upc) >= 12),
-    CONSTRAINT check_unique_composite UNIQUE (upc, source, source_item_publication_date)
+    CONSTRAINT check_unique_composite UNIQUE (upc, source)
 );
 
 CREATE INDEX idx_product_info ON product_info (source, upc, source_item_publication_date);

@@ -1,68 +1,28 @@
 #!/usr/bin/env python3
-#import SQLAlchemy
 import psycopg2
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from psycopg2.extras import NamedTupleCursor as ds_cur
 import requests
-#import PyMongo
+import PyMongo
 
-#import csv
+import csv
 from string import hexdigits
 from urllib.parse import unquote
 from html.parser import HTMLParser
+from datetime import date as d
 from datetime import datetime as dt
+import subprocess
+from os import getenv
 
 ### subversion check
 from sys import version_info as version
-
 if version < (3, 6):
     print("Python version 3.6 or greater required.")
     quit()
 
-### GET INFO ABOUT OPENFOODFACTS DATA
-# How you gonna compare against something you haven't examined?
-
-# To determine if a string is hexadecimal:
-# is it better to check that each character is a subset of the hexadecimal character set?
-# is it better to simply try converting the string into an integer?
-# def is_hexadecimal(string):
-#     "Check each character in a string against the hexadecimal character set."
-#     return all(char in set(hexdigits) for char in string)
-
-# off_current_hash = "some string i haven't collected"
-# off_update_hash_url = "https://static.openfoodfacts.org/data/sha256sum"
-
-# def off_retrieve_current_checksum():
-
-# def off_retrieve_update_checksum():
-#     try:
-#         r = requests.get(off_update_hash_url)
-#         off_update_hash = r.text.split(" ")[0]
-#         if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
-#             print("Retrieved OFF update checksum is not a SHA-256 hash.")
-#             return None
-#         print("OFF update checksum retrieval succeeded.")
-#         return off_update_hash
-#     except requests.exceptions.RequestException as e:
-#         print("OFF update checksum retrieval failed.", e)
-#         return None
-
-### sqlalchemy basics
-# from sqlalchemy import create_engine
-
-# from os import getenv
-# upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
-# engine = create_engine(f'postgresql://barcodeserver:{upc_DATABASE_KEY}@10.0.8.55/upc_dataset')
-
-
-
-
-# ### psycopg2 basics
-import psycopg2
-
-from os import getenv
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from psycopg2.extras import NamedTupleCursor as ds_cur
 upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 
+### Setup database if it's empty
 connection = None
 try: 
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
@@ -81,7 +41,7 @@ except:
 
 db_conn.close()
 
-### psycopg2 get dataset_source_meta table
+### get dataset_source_meta table
 ds_meta = None
 db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
 with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
@@ -91,13 +51,52 @@ with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
 db_conn.close()
 print(f"Dataset Source Metadata:\n{ds_meta}")
 
+### GET INFO ABOUT OPENFOODFACTS DATA
+def is_hexadecimal(string):
+    "Check each character in a string against the hexadecimal character set."
+    return all(char in set(hexdigits) for char in string)
+
+
+off_current_hash = None
+off_update_hash = None
+off_current_version_url = None
+off_update_hash_url = None
+for i in ds_meta:
+    if i['source_name'] == 'off':
+        off_current_hash = i["current_version_hash"]
+        off_update_hash_url = i["refresh_check_url"]
+        off_current_version_url = i["current_version_url"]
+
+try:
+    r = requests.get(off_update_hash_url)
+    off_update_hash = r.text.split(" ")[0]
+    if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
+        print("Retrieved OFF update checksum is not a SHA-256 hash.")
+        off_update_hash = None
+    print("OFF update checksum retrieval succeeded.")
+except requests.exceptions.RequestException as e:
+    print("OFF update checksum retrieval failed.", e)
+    off_update_hash = None
+
+if off_update_hash:
+    if not off_current_hash or off_current_hash != off_update_hash:
+        off_sp = subprocess.run(["./get_OFF_update.sh", off_current_version_url])
+        if off_sp.returncode == 0:
+            print("OpenFoodFacts Data Update Acquired.")
+        else:
+            print(f"OpenFoodFacts Data Update Failed (exit code {sp.returncode}).")
+
+
 ## GET INFO ABOUT USDA DATA:
-import requests
-from urllib.parse import unquote
-from html.parser import HTMLParser
-from datetime import datetime as dt
-usda_dataset_index_url = "https://fdc.nal.usda.gov/fdc-datasets/"
-usda_dataset_index_raw = requests.get(usda_dataset_index_url).text
+### Check datasource meta table for USDA data attributes
+usda_current_version_date = None
+usda_dataset_index_url = None
+usda_dataset_index_raw = None
+for i in ds_meta:
+    if i['source_name'] == 'off':
+        usda_current_version_date = i['current_version_date']
+        usda_dataset_index_url = i["refresh_check_url"]
+        usda_dataset_index_raw = requests.get(usda_dataset_index_url).text
 
 class USDAIndexParser(HTMLParser):
     dataset_list = []
@@ -120,16 +119,11 @@ for i in USDAIndexParser.dataset_list:
         latest_date = date_object
         latest_url = usda_dataset_index_url + i
 
-### Check datasource meta table for USDA data attributes
-for i in ds_meta:
-    if i['source_name'] == 'off':
-        usda_current_version_date = i['current_version_date']
-
 if usda_current_version_date == None or latest_date > usda_current_version_date:
     print("USDA dataset update available.")
 
 ## grab the latest archive and extract it. 
-import subprocess
+#import subprocess
 
 usda_sp = subprocess.run(["./get_USDA_update.sh", latest_url])
 if usda_sp.returncode == 0:
@@ -139,10 +133,7 @@ else:
 
 
 ### process acquired USDA files
-import csv
-from datetime import date as d
-from datetime import datetime as dt
-import psycopg2
+# TODO: update the dataset_source_meta table with new source details
 
 fn_file = open('food.csv', 'r')
 fn = csv.DictReader(fn_file)
