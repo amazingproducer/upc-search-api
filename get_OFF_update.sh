@@ -1,2 +1,2 @@
 #!/bin/bash
-wget -O- $1 | bsdtar -xf-
+wget -O- $1 | bsdtar -xof- | mongoimport
