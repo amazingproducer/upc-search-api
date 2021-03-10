@@ -184,60 +184,48 @@ with open('branded_food.csv', 'r') as bf_file:
     start_time = dt.now()
     for row in bf:
         f_id = row["fdc_id"]
-        f_upc = str(int(row["gtin_upc"]))
-        f_cat = [row["branded_food_category"], "NULL"][not row["branded_food_category"]]
-        f_ss = row["serving_size"]
-        f_ssu = row["serving_size_unit"]
+        f_upc = row["gtin_upc"]
+        f_cat = [row["branded_food_category"], None][not row["branded_food_category"]]
+        f_ss = [row["serving_size"], None][not row["serving_size"]]
+        f_ssu = [row["serving_size_unit"], None][not row["serving_size_unit"]]
         f_sd = row["available_date"]
         count += 1
         if not count % 1000:
             current_time = dt.now()
             print(f"Completed {count} out of {row_count} rows, {current_time - start_time} elapsed.")
-        if 12 <= len(f_upc) <= 14:
-#            print(f_upc, type(f_upc), len(f_upc))
-            for entry in food_names:
-                if entry["fdc_id"] == f_id:
-                    f_pn = entry["product_name"]
-                    f_pd = entry["publication_date"]
-                    with db_conn.cursor() as db_cur:
-                        db_cur.execute(f"""
-                        INSERT INTO
-                        product_info ({', '.join(fieldnames)})
-                        VALUES
-                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT ON CONSTRAINT
-                        check_unique_composite
-                        DO
-                        UPDATE SET
-                        source_item_id = EXCLUDED.source_item_id,
-                        name = EXCLUDED.name,
-                        category = EXCLUDED.category,
-                        db_entry_date = EXCLUDED.db_entry_date,
-                        source_item_submission_date = EXCLUDED.source_item_submission_date,
-                        source_item_publication_date = EXCLUDED.source_item_publication_date,
-                        serving_size = EXCLUDED.serving_size,
-                        serving_size_unit = EXCLUDED.serving_size_unit
-                        WHERE
-                        EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
-                        """,
-                        ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu)
-                        )
-
-                        # ('usda', '{f_id}', '{f_upc}', '{f_pn}', '{f_cat}', '{d.today()}', '{f_sd}', '{f_pd}', '{f_ss}', '{f_ssu}')
-
-
-                        # db_cur.execute(f"""INSERT INTO product_info ({', '.join(fieldnames)}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);""",
-                        # ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu))
-
-                        # db_cur.execute(f"""INSERT INTO product_info ({', '.join(fieldnames)}) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        # ON CONFLICT (upc, source, source_item_publication_date) DO UPDATE
-                        # SET source_item_id=%s, name=%s, category=%s, db_entry_date=%s, source_item_submission_date=%s, source_item_publication_date=%s, serving_size=%s, serving_size_unit=%s
-                        # WHERE source_item_publication_date > EXCLUDED.source_item_publication_date
-                        # ;""",
-                        # ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu))
-                        db_conn.commit()
-                    food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":d.today(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
-                    break
+        if f_upc.isnumeric():
+            f_upc = str(int(row["gtin_upc"]))
+            if 12 <= len(f_upc) <= 14:
+                for entry in food_names:
+                    if entry["fdc_id"] == f_id:
+                        f_pn = entry["product_name"]
+                        f_pd = entry["publication_date"]
+                        with db_conn.cursor() as db_cur:
+                            db_cur.execute(f"""
+                            INSERT INTO
+                            product_info ({', '.join(fieldnames)})
+                            VALUES
+                            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT ON CONSTRAINT
+                            check_unique_composite
+                            DO
+                            UPDATE SET
+                            source_item_id = EXCLUDED.source_item_id,
+                            name = EXCLUDED.name,
+                            category = EXCLUDED.category,
+                            db_entry_date = EXCLUDED.db_entry_date,
+                            source_item_submission_date = EXCLUDED.source_item_submission_date,
+                            source_item_publication_date = EXCLUDED.source_item_publication_date,
+                            serving_size = EXCLUDED.serving_size,
+                            serving_size_unit = EXCLUDED.serving_size_unit
+                            WHERE
+                            EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
+                            """,
+                            ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu)
+                            )
+                            db_conn.commit()
+                        food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":d.today(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
+                        break
     end_time = dt.now()
     print(f"Elapsed time: {end_time - start_time}")
 
