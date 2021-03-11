@@ -3,7 +3,7 @@ import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from psycopg2.extras import NamedTupleCursor as ds_cur
 import requests
-import PyMongo
+import pymongo
 
 import csv
 from string import hexdigits
@@ -23,68 +23,147 @@ if version < (3, 6):
 upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 
 ### Setup database if it's empty
-connection = None
-try: 
-    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-except:
-    print('DB connection failed.')
-    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='postgres')
-    db_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    with db_conn.cursor() as db_cur:
-        db_cur.execute('CREATE DATABASE upc_data')
-    db_conn.close()
-    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-    with db_conn.cursor() as db_cur:
-        with open('upc_dataset.sql', 'r') as sqlfile:
-            db_cur.execute(sqlfile.read())
-            db_conn.commit()
+# connection = None
+# try: 
+#     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+# except:
+#     print('DB connection failed.')
+#     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='postgres')
+#     db_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+#     with db_conn.cursor() as db_cur:
+#         db_cur.execute('CREATE DATABASE upc_data')
+#     db_conn.close()
+#     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+#     with db_conn.cursor() as db_cur:
+#         with open('upc_dataset.sql', 'r') as sqlfile:
+#             db_cur.execute(sqlfile.read())
+#             db_conn.commit()
 
-db_conn.close()
+# db_conn.close()
 
-### get dataset_source_meta table
-ds_meta = None
-db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
-    db_cur.execute('SELECT * FROM dataset_source_meta')
-    ds_meta = [row._asdict() for row in db_cur]
+# ### get dataset_source_meta table
+# ds_meta = None
+# db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+# with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
+#     db_cur.execute('SELECT * FROM dataset_source_meta')
+#     ds_meta = [row._asdict() for row in db_cur]
 
-db_conn.close()
-print(f"Dataset Source Metadata:\n{ds_meta}")
+# db_conn.close()
+# print(f"Dataset Source Metadata:\n{ds_meta}")
 
-### GET INFO ABOUT OPENFOODFACTS DATA
-def is_hexadecimal(string):
-    "Check each character in a string against the hexadecimal character set."
-    return all(char in set(hexdigits) for char in string)
+# ### GET INFO ABOUT OPENFOODFACTS DATA
+# def is_hexadecimal(string):
+#     "Check each character in a string against the hexadecimal character set."
+#     return all(char in set(hexdigits) for char in string)
 
 
-off_current_hash = None
-off_update_hash = None
-off_current_version_url = None
-off_update_hash_url = None
-for i in ds_meta:
-    if i['source_name'] == 'off':
-        off_current_hash = i["current_version_hash"]
-        off_update_hash_url = i["refresh_check_url"]
-        off_current_version_url = i["current_version_url"]
+# off_current_hash = None
+# off_update_hash = None
+# off_current_version_url = None
+# off_update_hash_url = None
+# for i in ds_meta:
+#     if i['source_name'] == 'off':
+#         off_current_hash = i["current_version_hash"]
+#         off_update_hash_url = i["refresh_check_url"]
+#         off_current_version_url = i["current_version_url"]
 
-try:
-    r = requests.get(off_update_hash_url)
-    off_update_hash = r.text.split(" ")[0]
-    if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
-        print("Retrieved OFF update checksum is not a SHA-256 hash.")
-        off_update_hash = None
-    print("OFF update checksum retrieval succeeded.")
-except requests.exceptions.RequestException as e:
-    print("OFF update checksum retrieval failed.", e)
-    off_update_hash = None
+# try:
+#     r = requests.get(off_update_hash_url)
+#     off_update_hash = r.text.split(" ")[0]
+#     if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
+#         print("Retrieved OFF update checksum is not a SHA-256 hash.")
+#         off_update_hash = None
+#     print("OFF update checksum retrieval succeeded.")
+# except requests.exceptions.RequestException as e:
+#     print("OFF update checksum retrieval failed.", e)
+#     off_update_hash = None
 
-if off_update_hash:
-    if not off_current_hash or off_current_hash != off_update_hash:
-        off_sp = subprocess.run(["./get_OFF_update.sh", off_current_version_url])
-        if off_sp.returncode == 0:
-            print("OpenFoodFacts Data Update Acquired.")
+# if off_update_hash:
+#     if not off_current_hash or off_current_hash != off_update_hash:
+#         sb_off_start = dt.now()
+#         off_sp = subprocess.run("./get_OFF_update.sh")
+#         if off_sp.returncode == 0:
+#             print("OpenFoodFacts Data Update Acquired.")
+#         else:
+#             print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
+#         print(f"Elapsed time: {dt.now() - sb_off_start}")
+
+
+### Use PyMongo to access retrieved OpenFoodFacts data
+m_client = pymongo.MongoClient()
+m_db = m_client['off_temp']
+off_collection = m_db['product_info']
+m_dataset = off_collection.find({})
+print(m_dataset[3]['code'])
+chz = 500000
+
+m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
+db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
+db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
+for m_d in m_dataset:
+    if chz > 0:
+        chz -= 1
+        m_entry = {}
+        entry = {}
+        kill_flag = False
+        for i in m_fields:
+            if i in m_d.keys():
+                m_entry[i] = m_d[i]
+        if 'product_name' not in m_entry.keys():
+#            print("product name absent")
+            kill_flag = True
+        elif not m_entry['product_name']:
+#            print("product name failure")
+            kill_flag = True
+        if not 12 <= len(m_entry['code']) <= 14:
+#            print("upc length out of range")
+            kill_flag = True
+        if not m_entry['code'].isnumeric():
+#            print("upc is not numeric")
+            kill_flag = True
         else:
-            print(f"OpenFoodFacts Data Update Failed (exit code {sp.returncode}).")
+            m_entry['code'] = str(int(m_entry['code']))
+#            print("stripping upc: ", m_entry['code'])
+        if not 12 <= int(m_entry['code']) <= 14:
+            kill_flag = True
+#            print("upc length out of range: ", m_entry['code'])
+        if 'created_t' in m_entry.keys():
+            if 'created_datetime' in m_entry.keys():
+                m_entry.pop('created_datetime', None)
+            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
+        else:
+            entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
+            if 'created_datetime' in m_entry.keys():
+                m_entry.pop('created_t', None)
+            else:
+                kill_flag = True
+        if 'last_modified_t' in m_entry.keys():
+            if 'last_modified_datetime' in m_entry.keys():
+                m_entry.pop('last_modified_datetime', None)
+            entry['source_item_publication_date'] = d.strftime(d.fromtimestamp(m_entry['last_modified_t']), '%Y-%m-%d')
+        else:
+            entry['source_item_publication_date'] = d.strftime(d.fromisoformat(m_entry['last_modified_datetime']), '%Y-%m-%d')
+            if 'last_modified_datetime' in m_entry.keys():
+                m_entry.pop('last_modified_t', None)
+            else:
+                kill_flag = True
+        if kill_flag:
+            poop = None
+#            print(f"Kill flag set for {m_entry['code']}")
+        else:
+            for k in m_entry.keys():
+                for j in db_mapping:
+                    print(k, j)
+                    if db_mapping[j] == k:
+                        entry[j] = m_entry[k]
+            entry['upc'] = m_entry['code']
+            entry['source'] = 'off'
+            entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')                
+            print(entry)
+        kill_flag = False
+#        print("upc length: ", len(m_entry['code']))
+    else:
+        break
 
 
 ## GET INFO ABOUT USDA DATA:
@@ -129,7 +208,7 @@ usda_sp = subprocess.run(["./get_USDA_update.sh", latest_url])
 if usda_sp.returncode == 0:
     print("USDA Data Update Acquired.")
 else:
-    print(f"USDA Data Update Failed (exit code {sp.returncode}).")
+    print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
 
 
 ### process acquired USDA files

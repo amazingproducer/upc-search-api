@@ -19,7 +19,7 @@ CREATE TABLE product_info
     source_item_id                  text,
     upc                             varchar(14),
     name                            text NOT NULL,
-    category                        text,
+    category                        text[],
     db_entry_date                   date NOT NULL,
     source_item_submission_date     date,
     source_item_publication_date    date,
