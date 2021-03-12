@@ -115,13 +115,10 @@ def validate_upc(code):
     else:
         return None
     if len(str(int(str(code)))) < 11:
-        print(len(str(int(str(code)))))
         return None
     if p_UPC.match(u_match):
         u_match = "0"+u_match
     return u_match
-
-print(validate_upc('0000000018517'))
 
 ### Upsert OpenFoodFacts entries
 def upsert_off_entry(entry):
