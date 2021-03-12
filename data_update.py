@@ -97,6 +97,7 @@ off_collection = m_db['product_info']
 m_dataset = off_collection.find({})
 row_count = off_collection.estimated_document_count()
 count = 0
+kill_count = 0
 
 m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
 db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
@@ -213,6 +214,7 @@ for m_d in m_dataset:
             kill_flag = True
     if kill_flag:
         print(f"Kill flag set for {m_entry['_id']}")
+        kill_count += 1
     else:
         for db_field in db_fields:
             if db_field not in entry.keys():
