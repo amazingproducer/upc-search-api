@@ -143,6 +143,7 @@ def upsert_off_entry(entry):
         """,
         (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
         )
+        print(db_cur.query)
         print(db_cur.fetchone()[0])
     db_conn.close()
 
