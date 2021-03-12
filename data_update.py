@@ -194,16 +194,13 @@ for m_d in m_dataset:
                 m_entry.pop('created_datetime', None)   
         else:
             m_entry.pop('created_t', None)
-    if 'created_datetime' in m_entry.keys():
-        if m_entry['created_datetime']:
-            entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
-        else:
-            m_entry.pop('created_datetime', None)
-            kill_flag = True
-            print('Submission date failure')
-    else:
-        print('Submission date failure')
-        kill_flag = True
+            if 'created_datetime' in m_entry.keys():
+                if m_entry['created_datetime']:
+                    entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
+                else:
+                    m_entry.pop('created_datetime', None)
+                    kill_flag = True
+                    print('Submission date failure')
     if 'last_modified_t' in m_entry.keys():
         if m_entry['last_modified_t']:
             entry['source_item_publication_date'] = d.fromtimestamp(m_entry['last_modified_t'])
@@ -211,16 +208,13 @@ for m_d in m_dataset:
                 m_entry.pop('last_modified_datetime', None)
         else:
             m_entry.pop('last_modified_t', None)
-    if 'last_modified_datetime' in m_entry.keys():
-        if m_entry['last_modified_datetime']:
-            entry['source_item_publication_date'] = d.fromisoformat(m_entry['last_modified_datetime'])
-        else:
-            m_entry.pop('last_modified_datetime', None)
-            print('Last Modified date failure')
-            kill_flag = True
-    else:
-        print('Last modified date failure')
-        kill_flag = True
+            if 'last_modified_datetime' in m_entry.keys():
+                if m_entry['last_modified_datetime']:
+                    entry['source_item_publication_date'] = d.fromisoformat(m_entry['last_modified_datetime'])
+                else:
+                    m_entry.pop('last_modified_datetime', None)
+                    print('Last Modified date failure')
+                    kill_flag = True
     if kill_flag:
         kill_count += 1
     else:
