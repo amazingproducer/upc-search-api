@@ -195,7 +195,6 @@ for m_d in m_dataset:
         else:
             m_entry.pop('created_t', None)
     if 'created_datetime' in m_entry.keys():
-        m_entry.pop('created_t', None)
         if m_entry['creted_datetime']:
             entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
         else:
