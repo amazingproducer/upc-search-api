@@ -39,7 +39,7 @@ except:
         with open('upc_dataset.sql', 'r') as sqlfile:
             db_cur.execute(sqlfile.read())
             # DEBUG
-            print(db_cur.query.decode('utf-8'))
+#            print(db_cur.query.decode('utf-8'))
             db_conn.commit()
 
 db_conn.close()
@@ -150,7 +150,7 @@ def upsert_off_entry(entry):
         """,
         (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
         )
-        print(db_cur.query.decode('utf-8'))
+#        print(db_cur.query.decode('utf-8'))
     db_conn.close()
 
 start_time = dt.now()
