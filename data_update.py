@@ -120,7 +120,7 @@ def validate_upc(code):
         u_match = "0"+u_match
     return u_match
 
-print(validate_upc())
+print(validate_upc('0000000018517'))
 
 ### Upsert OpenFoodFacts entries
 def upsert_off_entry(entry):
