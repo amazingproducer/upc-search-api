@@ -101,6 +101,8 @@ chz = 500
 def validate_upc(code):
     p_EAN = re.compile('\d{13}$')
     p_UPC = re.compile('\d{12}$')
+    if not code:
+        return None
     if p_EAN.search(str(code)):
         u_match = p_EAN.search(str(code)).group()
     elif p_UPC.search(str(code)):
@@ -124,14 +126,15 @@ for m_d in m_dataset:
             if i in m_d.keys():
                 m_entry[i] = m_d[i]
         if 'product_name' not in m_entry.keys():
-            print("product name absent")
+            print("Product name failure")
             kill_flag = True
         elif not m_entry['product_name']:
-            print("product name failure")
+            print("Product name absent")
             kill_flag = True
         if 'code' in m_entry.keys() and m_entry['code']:
             m_entry['code'] = validate_upc(m_entry['code'])
         else:
+            print("UPC failure")
             kill_flag = True
         if 'created_t' in m_entry.keys():
             if 'created_datetime' in m_entry.keys():
@@ -142,6 +145,7 @@ for m_d in m_dataset:
             if 'created_datetime' in m_entry.keys():
                 m_entry.pop('created_t', None)
             else:
+                print("Submission date failure")
                 kill_flag = True
         if 'last_modified_t' in m_entry.keys():
             if 'last_modified_datetime' in m_entry.keys():
@@ -152,9 +156,9 @@ for m_d in m_dataset:
             if 'last_modified_datetime' in m_entry.keys():
                 m_entry.pop('last_modified_t', None)
             else:
+                print("Publication date failure")
                 kill_flag = True
         if kill_flag:
-            poop = None
             print(f"Kill flag set for {m_entry['_id']}")
         else:
             for db_field in db_fields:
@@ -176,7 +180,7 @@ def upsert_off_entry(entry)
         INSERT INTO
         product_info ({', '.join(db_fields)})
         VALUES
-        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT ON CONSTRAINT
         check_unique_composite
         DO
@@ -194,7 +198,20 @@ def upsert_off_entry(entry)
         (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
         )
 
-
+### Update metadata after OFF update
+db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+db_conn.autocommit = True
+with db_conn.cursor() as db_cur:
+    db_cur.execute("""
+    UPDATE dataset_source_meta
+    SET current_version_date %s,
+    current_version_hash %s,
+    last_update_check %s
+    WHERE
+    source_name = %s;
+    """,
+    (d.strftime(d.today(), '%Y-%m-%d'), off_update_hash, d.strftime(d.today(), '%Y-%m-%d'), 'off')
+    )
 
 ## GET INFO ABOUT USDA DATA:
 ### Check datasource meta table for USDA data attributes
@@ -240,7 +257,6 @@ if usda_sp.returncode == 0:
 else:
     print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
 
-
 ### process acquired USDA files
 # TODO: update the dataset_source_meta table with new source details
 
@@ -284,7 +300,7 @@ with open('branded_food.csv', 'r') as bf_file:
     start_time = dt.now()
     for row in bf:
         f_id = row["fdc_id"]
-        f_upc = row["gtin_upc"]
+        f_upc = validate_upc(row["gtin_upc"])
         f_cat = [[row["branded_food_category"]], None][not row["branded_food_category"]]
         f_ss = [row["serving_size"], None][not row["serving_size"]]
         f_ssu = [row["serving_size_unit"], None][not row["serving_size_unit"]]
@@ -293,41 +309,55 @@ with open('branded_food.csv', 'r') as bf_file:
         if not count % 1000:
             current_time = dt.now()
             print(f"Completed {count} out of {row_count} rows, {current_time - start_time} elapsed.")
-        if f_upc.isnumeric():
-            f_upc = str(int(row["gtin_upc"]))
-            if 12 <= len(f_upc) <= 14:
-                for entry in food_names:
-                    if entry["fdc_id"] == f_id:
-                        f_pn = entry["product_name"]
-                        f_pd = entry["publication_date"]
-                        with db_conn.cursor() as db_cur:
-                            db_cur.execute(f"""
-                            INSERT INTO
-                            product_info ({', '.join(fieldnames)})
-                            VALUES
-                            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            ON CONFLICT ON CONSTRAINT
-                            check_unique_composite
-                            DO
-                            UPDATE SET
-                            source_item_id = EXCLUDED.source_item_id,
-                            name = EXCLUDED.name,
-                            category = EXCLUDED.category,
-                            db_entry_date = EXCLUDED.db_entry_date,
-                            source_item_submission_date = EXCLUDED.source_item_submission_date,
-                            source_item_publication_date = EXCLUDED.source_item_publication_date,
-                            serving_size = EXCLUDED.serving_size,
-                            serving_size_unit = EXCLUDED.serving_size_unit
-                            WHERE
-                            EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
-                            """,
-                            ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu)
-                            )
-                            db_conn.commit()
-                        food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":d.today(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
-                        break
+        if f_upc:
+            for entry in food_names:
+                if entry["fdc_id"] == f_id:
+                    f_pn = entry["product_name"]
+                    f_pd = entry["publication_date"]
+                    with db_conn.cursor() as db_cur:
+                        db_cur.execute(f"""
+                        INSERT INTO
+                        product_info ({', '.join(fieldnames)})
+                        VALUES
+                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT ON CONSTRAINT
+                        check_unique_composite
+                        DO
+                        UPDATE SET
+                        source_item_id = EXCLUDED.source_item_id,
+                        name = EXCLUDED.name,
+                        category = EXCLUDED.category,
+                        db_entry_date = EXCLUDED.db_entry_date,
+                        source_item_submission_date = EXCLUDED.source_item_submission_date,
+                        source_item_publication_date = EXCLUDED.source_item_publication_date,
+                        serving_size = EXCLUDED.serving_size,
+                        serving_size_unit = EXCLUDED.serving_size_unit
+                        WHERE
+                        EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
+                        """,
+                        ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu)
+                        )
+                        db_conn.commit()
+                    food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":d.today(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
+                    break
     end_time = dt.now()
     print(f"Elapsed time: {end_time - start_time}")
+subprocess.run("./cleanup_USDA_update.sh")
+
+### Update metadata after USDA update
+db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+db_conn.autocommit = True
+with db_conn.cursor() as db_cur:
+    db_cur.execute("""
+    UPDATE dataset_source_meta
+    SET current_version_url %s,
+    last_update_check %s
+    WHERE
+    source_name = %s;
+    """,
+    (d.strftime(d.today(), '%Y-%m-%d'), d.strftime(d.today(), '%Y-%m-%d'), 'usda')
+    )
+
 
 ### save the joined data to a csv in case we want it
 with open('newfile.csv', 'w') as newfile:
