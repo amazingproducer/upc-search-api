@@ -113,6 +113,33 @@ def validate_upc(code):
         u_match = "0"+u_match
     return u_match
 
+### Upsert OpenFoodFacts entries
+def upsert_off_entry(entry):
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute(f"""
+        INSERT INTO
+        product_info ({', '.join(db_fields)})
+        VALUES
+        (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT ON CONSTRAINT
+        check_unique_composite
+        DO
+        UPDATE SET
+        source_item_id = EXCLUDED.source_item_id,
+        name = EXCLUDED.name,
+        category = EXCLUDED.category,
+        db_entry_date = EXCLUDED.db_entry_date,
+        source_item_submission_date = EXCLUDED.source_item_submission_date,
+        source_item_publication_date = EXCLUDED.source_item_publication_date,
+        serving_size_fulltext = EXCLUDED.serving_size_fulltext
+        WHERE
+        EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
+        """,
+        (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
+        )
+
 m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
 db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
 db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
@@ -175,32 +202,6 @@ for m_d in m_dataset:
     else:
         break
 
-### Upsert OpenFoodFacts entries
-def upsert_off_entry(entry):
-    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-    db_conn.autocommit = True
-    with db_conn.cursor() as db_cur:
-        db_cur.execute(f"""
-        INSERT INTO
-        product_info ({', '.join(db_fields)})
-        VALUES
-        (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ON CONFLICT ON CONSTRAINT
-        check_unique_composite
-        DO
-        UPDATE SET
-        source_item_id = EXCLUDED.source_item_id,
-        name = EXCLUDED.name,
-        category = EXCLUDED.category,
-        db_entry_date = EXCLUDED.db_entry_date,
-        source_item_submission_date = EXCLUDED.source_item_submission_date,
-        source_item_publication_date = EXCLUDED.source_item_publication_date,
-        serving_size_fulltext = EXCLUDED.serving_size_fulltext
-        WHERE
-        EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
-        """,
-        (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
-        )
 
 ### Update metadata after OFF update
 db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
