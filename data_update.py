@@ -169,7 +169,7 @@ for m_d in m_dataset:
             entry['category'] = m_entry['categories_tags']
         else:
             entry['category'] = None
-        entry['serving_size_fulltext'] = [m_entry["serving_size"], None]["serving_size" not in m_entry.keys()]
+        entry['serving_size_fulltext'] = [None, m_entry["serving_size"]]["serving_size" in m_entry.keys()]
         if 'created_t' in m_entry.keys():
             if 'created_datetime' in m_entry.keys():
                 m_entry.pop('created_datetime', None)
