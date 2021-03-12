@@ -179,11 +179,13 @@ for m_d in m_dataset:
         m_entry['code'] = validate_upc(m_entry['code'])
         entry['upc'] = validate_upc(m_entry['code'])
     if "categories_tags" in m_entry.keys():
-        entry['category'] = m_entry['categories_tags']
+        if m_entry['categories_tags'] == None:
+            entry['category'] = m_entry['categories_tags']
     else:
         entry['category'] = None
     if "serving_size" in m_entry.keys():
-        entry['serving_size_fulltext'] = m_entry["serving_size"]
+        if m_entry['serving_size'] == None:
+            entry['serving_size_fulltext'] = m_entry["serving_size"]
     else:
         entry['serving_size_fulltext'] = None
     if 'created_t' in m_entry.keys():
