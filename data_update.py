@@ -176,7 +176,6 @@ print(f"Dataset Source Metadata:\n{ds_meta}")
 usda_current_version_date = None
 usda_dataset_index_url = None
 usda_dataset_index_raw = None
-print(ds_meta)
 for i in ds_meta:
     if i['source_name'] == 'usda':
         usda_current_version_date = i['current_version_date']
