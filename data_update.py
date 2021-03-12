@@ -162,7 +162,7 @@ for m_d in m_dataset:
     entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
     if not count % 1000:
         current_time = dt.now()
-        print(f"Completed {count} out of {row_count} rows, {current_time - start_time} elapsed.")
+        print(f"Processed {count} out of {row_count} rows, rejecting {kill_count} rows, {current_time - start_time} elapsed.")
     for i in m_fields:
         if i in m_d.keys():
             m_entry[i] = m_d[i]
