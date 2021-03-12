@@ -52,123 +52,148 @@ with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
 db_conn.close()
 print(f"Dataset Source Metadata:\n{ds_meta}")
 
-# ### GET INFO ABOUT OPENFOODFACTS DATA
-# def is_hexadecimal(string):
-#     "Check each character in a string against the hexadecimal character set."
-#     return all(char in set(hexdigits) for char in string)
+### GET INFO ABOUT OPENFOODFACTS DATA
+def is_hexadecimal(string):
+    "Check each character in a string against the hexadecimal character set."
+    return all(char in set(hexdigits) for char in string)
 
 
-# off_current_hash = None
-# off_update_hash = None
-# off_current_version_url = None
-# off_update_hash_url = None
-# for i in ds_meta:
-#     if i['source_name'] == 'off':
-#         off_current_hash = i["current_version_hash"]
-#         off_update_hash_url = i["refresh_check_url"]
-#         off_current_version_url = i["current_version_url"]
+off_current_hash = None
+off_update_hash = None
+off_current_version_url = None
+off_update_hash_url = None
+for i in ds_meta:
+    if i['source_name'] == 'off':
+        off_current_hash = i["current_version_hash"]
+        off_update_hash_url = i["refresh_check_url"]
+        off_current_version_url = i["current_version_url"]
 
-# try:
-#     r = requests.get(off_update_hash_url)
-#     off_update_hash = r.text.split(" ")[0]
-#     if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
-#         print("Retrieved OFF update checksum is not a SHA-256 hash.")
-#         off_update_hash = None
-#     print("OFF update checksum retrieval succeeded.")
-# except requests.exceptions.RequestException as e:
-#     print("OFF update checksum retrieval failed.", e)
-#     off_update_hash = None
+try:
+    r = requests.get(off_update_hash_url)
+    off_update_hash = r.text.split(" ")[0]
+    if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
+        print("Retrieved OFF update checksum is not a SHA-256 hash.")
+        off_update_hash = None
+    print("OFF update checksum retrieval succeeded.")
+except requests.exceptions.RequestException as e:
+    print("OFF update checksum retrieval failed.", e)
+    off_update_hash = None
 
-# if off_update_hash:
-#     if not off_current_hash or off_current_hash != off_update_hash:
-#         sb_off_start = dt.now()
-#         off_sp = subprocess.run("./get_OFF_update.sh")
-#         if off_sp.returncode == 0:
-#             print("OpenFoodFacts Data Update Acquired.")
-#         else:
-#             print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
-#         print(f"Elapsed time: {dt.now() - sb_off_start}")
+if off_update_hash:
+    if not off_current_hash or off_current_hash != off_update_hash:
+        sb_off_start = dt.now()
+        off_sp = subprocess.run("./get_OFF_update.sh")
+        if off_sp.returncode == 0:
+            print("OpenFoodFacts Data Update Acquired.")
+        else:
+            print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
+        print(f"Elapsed time: {dt.now() - sb_off_start}")
 
 
-# ### Use PyMongo to access retrieved OpenFoodFacts data
-# m_client = pymongo.MongoClient()
-# m_db = m_client['off_temp']
-# off_collection = m_db['product_info']
-# m_dataset = off_collection.find({})
-# #print(m_dataset[3]['code'])
-# chz = 500000
+### Use PyMongo to access retrieved OpenFoodFacts data
+m_client = pymongo.MongoClient()
+m_db = m_client['off_temp']
+off_collection = m_db['product_info']
+m_dataset = off_collection.find({})
+#print(m_dataset[3]['code'])
+chz = 500
 
-# def validate_upc(code):
-#     p_EAN = re.compile('\d{13}$')
-#     p_UPC = re.compile('\d{12}$')
-#     if p_EAN.search(str(code)):
-#         u_match = p_EAN.search(str(code)).group()
-#     elif p_UPC.search(str(code)):
-#         u_match = p_UPC.search(str(code)).group()
-#     else:
-#         return None
-#     if p_UPC.match(u_match):
-#         u_match = "0"+u_match
-#     return u_match
+def validate_upc(code):
+    p_EAN = re.compile('\d{13}$')
+    p_UPC = re.compile('\d{12}$')
+    if p_EAN.search(str(code)):
+        u_match = p_EAN.search(str(code)).group()
+    elif p_UPC.search(str(code)):
+        u_match = p_UPC.search(str(code)).group()
+    else:
+        return None
+    if p_UPC.match(u_match):
+        u_match = "0"+u_match
+    return u_match
 
-# m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
-# db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
-# db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
-# for m_d in m_dataset:
-#     if chz > 0:
-#         chz -= 1
-#         m_entry = {}
-#         entry = {}
-#         kill_flag = False
-#         for i in m_fields:
-#             if i in m_d.keys():
-#                 m_entry[i] = m_d[i]
-#         if 'product_name' not in m_entry.keys():
-#             print("product name absent")
-#             kill_flag = True
-#         elif not m_entry['product_name']:
-#             print("product name failure")
-#             kill_flag = True
-#         if 'code' in m_entry.keys() and m_entry['code']:
-#             m_entry['code'] = validate_upc(m_entry['code'])
-#         else:
-#             kill_flag = True
+m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
+db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
+db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
+for m_d in m_dataset:
+    if chz > 0:
+        chz -= 1
+        m_entry = {}
+        entry = {}
+        kill_flag = False
+        for i in m_fields:
+            if i in m_d.keys():
+                m_entry[i] = m_d[i]
+        if 'product_name' not in m_entry.keys():
+            print("product name absent")
+            kill_flag = True
+        elif not m_entry['product_name']:
+            print("product name failure")
+            kill_flag = True
+        if 'code' in m_entry.keys() and m_entry['code']:
+            m_entry['code'] = validate_upc(m_entry['code'])
+        else:
+            kill_flag = True
+        if 'created_t' in m_entry.keys():
+            if 'created_datetime' in m_entry.keys():
+                m_entry.pop('created_datetime', None)
+            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
+        else:
+            entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
+            if 'created_datetime' in m_entry.keys():
+                m_entry.pop('created_t', None)
+            else:
+                kill_flag = True
+        if 'last_modified_t' in m_entry.keys():
+            if 'last_modified_datetime' in m_entry.keys():
+                m_entry.pop('last_modified_datetime', None)
+            entry['source_item_publication_date'] = d.strftime(d.fromtimestamp(m_entry['last_modified_t']), '%Y-%m-%d')
+        else:
+            entry['source_item_publication_date'] = d.strftime(d.fromisoformat(m_entry['last_modified_datetime']), '%Y-%m-%d')
+            if 'last_modified_datetime' in m_entry.keys():
+                m_entry.pop('last_modified_t', None)
+            else:
+                kill_flag = True
+        if kill_flag:
+            poop = None
+            print(f"Kill flag set for {m_entry['_id']}")
+        else:
+            for db_field in db_fields:
+                if db_field not in entry.keys():
+                    entry[db_field] = m_entry[db_mapping[db_field]]
+            entry['source'] = 'off'
+            entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
+            print(entry)
+            upsert_off_entry(entry)
+    else:
+        break
 
-#         if 'created_t' in m_entry.keys():
-#             if 'created_datetime' in m_entry.keys():
-#                 m_entry.pop('created_datetime', None)
-#             entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
-#         else:
-#             entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
-#             if 'created_datetime' in m_entry.keys():
-#                 m_entry.pop('created_t', None)
-#             else:
-#                 kill_flag = True
-#         if 'last_modified_t' in m_entry.keys():
-#             if 'last_modified_datetime' in m_entry.keys():
-#                 m_entry.pop('last_modified_datetime', None)
-#             entry['source_item_publication_date'] = d.strftime(d.fromtimestamp(m_entry['last_modified_t']), '%Y-%m-%d')
-#         else:
-#             entry['source_item_publication_date'] = d.strftime(d.fromisoformat(m_entry['last_modified_datetime']), '%Y-%m-%d')
-#             if 'last_modified_datetime' in m_entry.keys():
-#                 m_entry.pop('last_modified_t', None)
-#             else:
-#                 kill_flag = True
-#         if kill_flag:
-#             poop = None
-#             print(f"Kill flag set for {m_entry['_id']}")
-#         else:
-#             for k in m_entry.keys():
-#                 for j in db_mapping:
-#                     if db_mapping[j] == k:
-#                         entry[j] = m_entry[k]
-#             entry['upc'] = m_entry['code']
-#             entry['source'] = 'off'
-#             entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
-#             # create an upsert function to call here
-#             print(entry)
-#     else:
-#         break
+### Upsert OpenFoodFacts entries
+def upsert_off_entry(entry)
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute(f"""
+        INSERT INTO
+        product_info ({', '.join(db_fields)})
+        VALUES
+        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT ON CONSTRAINT
+        check_unique_composite
+        DO
+        UPDATE SET
+        source_item_id = EXCLUDED.source_item_id,
+        name = EXCLUDED.name,
+        category = EXCLUDED.category,
+        db_entry_date = EXCLUDED.db_entry_date,
+        source_item_submission_date = EXCLUDED.source_item_submission_date,
+        source_item_publication_date = EXCLUDED.source_item_publication_date,
+        serving_size_fulltext = EXCLUDED.serving_size_fulltext
+        WHERE
+        EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
+        """,
+        (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
+        )
+
 
 
 ## GET INFO ABOUT USDA DATA:
