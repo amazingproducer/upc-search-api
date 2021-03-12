@@ -176,9 +176,11 @@ for m_d in m_dataset:
         if 'created_t' in m_entry.keys():
             if 'created_datetime' in m_entry.keys():
                 m_entry.pop('created_datetime', None)
-            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
+            entry['source_item_submission_date'] = d.fromtimestamp(m_entry['created_t'])
+#            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
         else:
-            entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
+            entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
+#            entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
             if 'created_datetime' in m_entry.keys():
                 m_entry.pop('created_t', None)
             else:
@@ -219,7 +221,7 @@ with db_conn.cursor() as db_cur:
     WHERE
     source_name = %s;
     """,
-    (d.strftime(d.today(), '%Y-%m-%d'), off_update_hash, d.strftime(d.today(), '%Y-%m-%d'), 'off')
+    (d.today(), off_update_hash, d.today(), 'off')
     )
 
 ## GET INFO ABOUT USDA DATA:
