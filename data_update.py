@@ -215,9 +215,9 @@ db_conn.autocommit = True
 with db_conn.cursor() as db_cur:
     db_cur.execute("""
     UPDATE dataset_source_meta
-    SET current_version_date %s,
-    current_version_hash %s,
-    last_update_check %s
+    SET current_version_date = %s,
+    current_version_hash = %s,
+    last_update_check = %s
     WHERE
     source_name = %s;
     """,
@@ -361,12 +361,12 @@ db_conn.autocommit = True
 with db_conn.cursor() as db_cur:
     db_cur.execute("""
     UPDATE dataset_source_meta
-    SET current_version_url %s,
-    last_update_check %s
+    SET current_version_url = %s,
+    last_update_check = %s
     WHERE
-    source_name = %s;
+    source_name = = %s;
     """,
-    (d.strftime(d.today(), '%Y-%m-%d'), d.strftime(d.today(), '%Y-%m-%d'), 'usda')
+    (d.today(), d.today(), 'usda')
     )
 
 
