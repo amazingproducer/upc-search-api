@@ -108,6 +108,8 @@ def validate_upc(code):
     p_UPC = re.compile('\d{12}$')
     if code == None:
         return None
+    if not code:
+        return None
     if p_EAN.search(str(code)):
         u_match = p_EAN.search(str(code)).group()
     elif p_UPC.search(str(code)):
