@@ -189,7 +189,7 @@ for m_d in m_dataset:
         entry['serving_size_fulltext'] = None
     if 'created_t' in m_entry.keys():
         if 'created_datetime' in m_entry.keys():
-            m_entry.pop('created_datetime', None)
+            m_entry.pop('created_datetime', None)   
         entry['source_item_submission_date'] = d.fromtimestamp(m_entry['created_t'])
 #            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
     else:
