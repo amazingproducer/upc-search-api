@@ -79,15 +79,15 @@ except requests.exceptions.RequestException as e:
     print("OFF update checksum retrieval failed.", e)
     off_update_hash = None
 
-if off_update_hash:
-    if not off_current_hash or off_current_hash != off_update_hash:
-        sb_off_start = dt.now()
-        off_sp = subprocess.run("./get_OFF_update.sh")
-        if off_sp.returncode == 0:
-            print("OpenFoodFacts Data Update Acquired.")
-        else:
-            print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
-        print(f"Elapsed time: {dt.now() - sb_off_start}")
+# if off_update_hash:
+#     if not off_current_hash or off_current_hash != off_update_hash:
+#         sb_off_start = dt.now()
+#         off_sp = subprocess.run("./get_OFF_update.sh")
+#         if off_sp.returncode == 0:
+#             print("OpenFoodFacts Data Update Acquired.")
+#         else:
+#             print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
+#         print(f"Elapsed time: {dt.now() - sb_off_start}")
 
 
 ### Use PyMongo to access retrieved OpenFoodFacts data
@@ -138,6 +138,10 @@ for m_d in m_dataset:
         else:
             print("UPC failure")
             kill_flag = True
+        if "categories_tags" in m_entry.keys():
+            entry['category'] = m_entry['categories_tags']
+        else:
+            entry['category'] = None
         if 'created_t' in m_entry.keys():
             if 'created_datetime' in m_entry.keys():
                 m_entry.pop('created_datetime', None)
