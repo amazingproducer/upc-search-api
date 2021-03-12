@@ -172,11 +172,12 @@ for m_d in m_dataset:
     elif not m_entry['product_name']:
         print("Product name absent")
         kill_flag = True
-    if 'code' in m_entry.keys() and m_entry['code']:
-        m_entry['code'] = validate_upc(m_entry['code'])
-    else:
+    if validate_upc(m_entry['code']) == None:
         print("UPC failure")
         kill_flag = True
+    else:
+        m_entry['code'] = validate_upc(m_entry['code'])
+        entry['upc'] = validate_upc(m_entry['code'])
     if "categories_tags" in m_entry.keys():
         entry['category'] = m_entry['categories_tags']
     else:
