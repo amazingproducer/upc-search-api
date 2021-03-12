@@ -260,7 +260,7 @@ with open('branded_food.csv', 'r') as bf_file:
     for row in bf:
         f_id = row["fdc_id"]
         f_upc = row["gtin_upc"]
-        f_cat = [row["branded_food_category"], None][not row["branded_food_category"]]
+        f_cat = [[row["branded_food_category"]], None][not row["branded_food_category"]]
         f_ss = [row["serving_size"], None][not row["serving_size"]]
         f_ssu = [row["serving_size_unit"], None][not row["serving_size_unit"]]
         f_sd = row["available_date"]
