@@ -164,13 +164,13 @@ for m_d in m_dataset:
         if i in m_d.keys():
             m_entry[i] = m_d[i]
     if 'product_name' not in m_entry.keys():
-        print("Product name failure")
+#        print("Product name failure")
         kill_flag = True
     elif not m_entry['product_name']:
-        print("Product name absent")
+#        print("Product name absent")
         kill_flag = True
     if validate_upc(m_entry['code']) == None:
-        print("UPC failure")
+#        print("UPC failure")
         kill_flag = True
     else:
         m_entry['code'] = validate_upc(m_entry['code'])
@@ -196,7 +196,7 @@ for m_d in m_dataset:
         if 'created_datetime' in m_entry.keys():
             m_entry.pop('created_t', None)
         else:
-            print("Submission date failure")
+#            print("Submission date failure")
             kill_flag = True
     if 'last_modified_t' in m_entry.keys():
         if 'last_modified_datetime' in m_entry.keys():
@@ -207,10 +207,10 @@ for m_d in m_dataset:
         if 'last_modified_datetime' in m_entry.keys():
             m_entry.pop('last_modified_t', None)
         else:
-            print("Publication date failure")
+#            print("Publication date failure")
             kill_flag = True
     if kill_flag:
-        print(f"Kill flag set for {m_entry['_id']}")
+#        print(f"Kill flag set for {m_entry['_id']}")
         kill_count += 1
     else:
         for db_field in db_fields:
