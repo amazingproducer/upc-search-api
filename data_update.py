@@ -178,7 +178,7 @@ usda_dataset_index_url = None
 usda_dataset_index_raw = None
 print(ds_meta)
 for i in ds_meta:
-    if i['source_name'] == 'off':
+    if i['source_name'] == 'usda':
         usda_current_version_date = i['current_version_date']
         usda_dataset_index_url = i["refresh_check_url"]
         usda_dataset_index_raw = requests.get(usda_dataset_index_url).text
