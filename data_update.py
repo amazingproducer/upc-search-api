@@ -143,6 +143,7 @@ def upsert_off_entry(entry):
         """,
         (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
         )
+    db_conn.close()
 
 start_time = dt.now()
 for m_d in m_dataset:
@@ -225,6 +226,7 @@ with db_conn.cursor() as db_cur:
     """,
     (d.today(), off_update_hash, d.today(), 'off')
     )
+db_conn.close()
 
 ## GET INFO ABOUT USDA DATA:
 ### Check datasource meta table for USDA data attributes
@@ -351,6 +353,8 @@ with open('branded_food.csv', 'r') as bf_file:
                         ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu)
                         )
                         db_conn.commit()
+                    db_conn.close()
+
                     food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":d.today(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
                     break
     end_time = dt.now()
@@ -370,6 +374,7 @@ with db_conn.cursor() as db_cur:
     """,
     (d.today(), d.today(), 'usda')
     )
+db_conn.close()
 
 
 ### save the joined data to a csv in case we want it
