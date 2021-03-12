@@ -210,7 +210,7 @@ if usda_current_version_date == None or latest_date > usda_current_version_date:
 ## grab the latest archive and extract it. 
 #import subprocess
 
-usda_sp = subprocess.run(["get_USDA_update.sh", latest_url])
+usda_sp = subprocess.run(["./get_USDA_update.sh", latest_url])
 if usda_sp.returncode == 0:
     print("USDA Data Update Acquired.")
 else:
