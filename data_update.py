@@ -188,31 +188,37 @@ for m_d in m_dataset:
     else:
         entry['serving_size_fulltext'] = None
     if 'created_t' in m_entry.keys():
-        if 'created_datetime' in m_entry.keys():
-            m_entry.pop('created_datetime', None)   
-        entry['source_item_submission_date'] = d.fromtimestamp(m_entry['created_t'])
-#            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
-    else:
-        entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
-#            entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
-        if 'created_datetime' in m_entry.keys():
+        if m_entry['created_t']:
+            entry['source_item_submission_date'] = d.fromtimestamp(m_entry['created_t'])
+            if 'created_datetime' in m_entry.keys():
+                m_entry.pop('created_datetime', None)   
+        else:
             m_entry.pop('created_t', None)
+    if 'created_datetime' in m_entry.keys():
+        m_entry.pop('created_t', None)
+        if m_entry['creted_datetime']:
+            entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
         else:
-#            print("Submission date failure")
-            kill_flag = True
-    if 'last_modified_t' in m_entry.keys():
-        if 'last_modified_datetime' in m_entry.keys():
-            m_entry.pop('last_modified_datetime', None)
-        entry['source_item_publication_date'] = d.strftime(d.fromtimestamp(m_entry['last_modified_t']), '%Y-%m-%d')
+            m_entry.pop('created_datetime', None)
+            kill_flag = True        
     else:
-        entry['source_item_publication_date'] = d.strftime(d.fromisoformat(m_entry['last_modified_datetime']), '%Y-%m-%d')
-        if 'last_modified_datetime' in m_entry.keys():
-            m_entry.pop('last_modified_t', None)
+        kill_flag = True
+    if 'last_modified_t' in m_entry.keys():
+        if m_entry['last_modified_t']:
+            entry['source_item_publication_date'] = d.fromtimestamp(m_entry['last_modified_t'])
+            if 'last_modified_datetime' in m_entry.keys():
+                m_entry.pop('last_modified_datetime', None)
         else:
-#            print("Publication date failure")
+            m_entry.pop('last_modified_t', None)
+    if 'last_modified_datetime' in m_entry.keys():
+        if m_entry['last_modified_datetime']:
+            entry['source_item_publication_date'] = d.fromisoformat(m_entry['last_modified_datetime'])
+        else:
+            m_entry.pop('last_modified_datetime', None)
             kill_flag = True
+    else:
+        kill_flag = True
     if kill_flag:
-#        print(f"Kill flag set for {m_entry['_id']}")
         kill_count += 1
     else:
         for db_field in db_fields:
