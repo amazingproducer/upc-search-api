@@ -105,7 +105,7 @@ db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'prod
 def validate_upc(code):
     p_EAN = re.compile('\d{13}$')
     p_UPC = re.compile('\d{12}$')
-    if not code:
+    if code == None:
         return None
     if p_EAN.search(str(code)):
         u_match = p_EAN.search(str(code)).group()
@@ -119,6 +119,8 @@ def validate_upc(code):
     if p_UPC.match(u_match):
         u_match = "0"+u_match
     return u_match
+
+print(validate_upc())
 
 ### Upsert OpenFoodFacts entries
 def upsert_off_entry(entry):
