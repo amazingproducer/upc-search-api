@@ -5,6 +5,7 @@ from psycopg2.extras import NamedTupleCursor as ds_cur
 import requests
 import pymongo
 
+import re
 import csv
 from string import hexdigits
 from urllib.parse import unquote
@@ -94,8 +95,21 @@ m_client = pymongo.MongoClient()
 m_db = m_client['off_temp']
 off_collection = m_db['product_info']
 m_dataset = off_collection.find({})
-print(m_dataset[3]['code'])
+#print(m_dataset[3]['code'])
 chz = 500000
+
+def validate_upc(code):
+    p_EAN = re.compile('\d{13}$')
+    p_UPC = re.compile('\d{12}$')
+    if p_EAN.search(str(code)):
+        u_match = p_EAN.search(str(code)).group()
+    elif p_UPC.search(str(code)):
+        u_match = p_UPC.search(str(code)).group()
+    else:
+        return None
+    if p_UPC.match(u_match):
+        u_match = "0"+u_match
+    return u_match
 
 m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
 db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
@@ -110,23 +124,16 @@ for m_d in m_dataset:
             if i in m_d.keys():
                 m_entry[i] = m_d[i]
         if 'product_name' not in m_entry.keys():
-#            print("product name absent")
+            print("product name absent")
             kill_flag = True
         elif not m_entry['product_name']:
-#            print("product name failure")
+            print("product name failure")
             kill_flag = True
-        if not 12 <= len(m_entry['code']) <= 14:
-#            print("upc length out of range")
-            kill_flag = True
-        if not m_entry['code'].isnumeric():
-#            print("upc is not numeric")
-            kill_flag = True
+        if 'code' in m_entry.keys() and m_entry['code']:
+            m_entry['code'] = validate_upc(m_entry['code'])
         else:
-            m_entry['code'] = str(int(m_entry['code']))
-#            print("stripping upc: ", m_entry['code'])
-        if not 12 <= int(m_entry['code']) <= 14:
             kill_flag = True
-#            print("upc length out of range: ", m_entry['code'])
+
         if 'created_t' in m_entry.keys():
             if 'created_datetime' in m_entry.keys():
                 m_entry.pop('created_datetime', None)
@@ -149,19 +156,17 @@ for m_d in m_dataset:
                 kill_flag = True
         if kill_flag:
             poop = None
-#            print(f"Kill flag set for {m_entry['code']}")
+            print(f"Kill flag set for {m_entry['_id']}")
         else:
             for k in m_entry.keys():
                 for j in db_mapping:
-                    print(k, j)
                     if db_mapping[j] == k:
                         entry[j] = m_entry[k]
             entry['upc'] = m_entry['code']
             entry['source'] = 'off'
-            entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')                
+            entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
+            # create an upsert function to call here
             print(entry)
-        kill_flag = False
-#        print("upc length: ", len(m_entry['code']))
     else:
         break
 
