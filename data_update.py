@@ -38,6 +38,8 @@ except:
     with db_conn.cursor() as db_cur:
         with open('upc_dataset.sql', 'r') as sqlfile:
             db_cur.execute(sqlfile.read())
+            # DEBUG
+            print(db_cur.query.decode('utf-8'))
             db_conn.commit()
 
 db_conn.close()
