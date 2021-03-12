@@ -95,8 +95,8 @@ m_client = pymongo.MongoClient()
 m_db = m_client['off_temp']
 off_collection = m_db['product_info']
 m_dataset = off_collection.find({})
-#print(m_dataset[3]['code'])
-chz = 500
+row_count = off_collection.estimated_document_count()
+count = 0
 
 def validate_upc(code):
     p_EAN = re.compile('\d{13}$')
@@ -144,69 +144,70 @@ m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'crea
 db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
 db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
 for m_d in m_dataset:
-    if chz > 0:
-        chz -= 1
-        m_entry = {}
-        entry = {}
-        kill_flag = False
-        entry['source'] = 'off'
-        entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
-        for i in m_fields:
-            if i in m_d.keys():
-                m_entry[i] = m_d[i]
-        if 'product_name' not in m_entry.keys():
-            print("Product name failure")
-            kill_flag = True
-        elif not m_entry['product_name']:
-            print("Product name absent")
-            kill_flag = True
-        if 'code' in m_entry.keys() and m_entry['code']:
-            m_entry['code'] = validate_upc(m_entry['code'])
-        else:
-            print("UPC failure")
-            kill_flag = True
-        if "categories_tags" in m_entry.keys():
-            entry['category'] = m_entry['categories_tags']
-        else:
-            entry['category'] = None
-        if "serving_size" in m_entry.keys():
-            entry['serving_size_fulltext'] = m_entry["serving_size"]
-        else:
-            entry['serving_size_fulltext'] = None
-        if 'created_t' in m_entry.keys():
-            if 'created_datetime' in m_entry.keys():
-                m_entry.pop('created_datetime', None)
-            entry['source_item_submission_date'] = d.fromtimestamp(m_entry['created_t'])
-#            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
-        else:
-            entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
-#            entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
-            if 'created_datetime' in m_entry.keys():
-                m_entry.pop('created_t', None)
-            else:
-                print("Submission date failure")
-                kill_flag = True
-        if 'last_modified_t' in m_entry.keys():
-            if 'last_modified_datetime' in m_entry.keys():
-                m_entry.pop('last_modified_datetime', None)
-            entry['source_item_publication_date'] = d.strftime(d.fromtimestamp(m_entry['last_modified_t']), '%Y-%m-%d')
-        else:
-            entry['source_item_publication_date'] = d.strftime(d.fromisoformat(m_entry['last_modified_datetime']), '%Y-%m-%d')
-            if 'last_modified_datetime' in m_entry.keys():
-                m_entry.pop('last_modified_t', None)
-            else:
-                print("Publication date failure")
-                kill_flag = True
-        if kill_flag:
-            print(f"Kill flag set for {m_entry['_id']}")
-        else:
-            for db_field in db_fields:
-                if db_field not in entry.keys():
-                    entry[db_field] = m_entry[db_mapping[db_field]]
-            print(entry)
-            upsert_off_entry(entry)
+    count += 1
+    start_time = dt.now()
+    m_entry = {}
+    entry = {}
+    kill_flag = False
+    entry['source'] = 'off'
+    entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
+    if not count % 1000:
+        current_time = dt.now()
+        print(f"Completed {count} out of {row_count} rows, {current_time - start_time} elapsed.")
+    for i in m_fields:
+        if i in m_d.keys():
+            m_entry[i] = m_d[i]
+    if 'product_name' not in m_entry.keys():
+        print("Product name failure")
+        kill_flag = True
+    elif not m_entry['product_name']:
+        print("Product name absent")
+        kill_flag = True
+    if 'code' in m_entry.keys() and m_entry['code']:
+        m_entry['code'] = validate_upc(m_entry['code'])
     else:
-        break
+        print("UPC failure")
+        kill_flag = True
+    if "categories_tags" in m_entry.keys():
+        entry['category'] = m_entry['categories_tags']
+    else:
+        entry['category'] = None
+    if "serving_size" in m_entry.keys():
+        entry['serving_size_fulltext'] = m_entry["serving_size"]
+    else:
+        entry['serving_size_fulltext'] = None
+    if 'created_t' in m_entry.keys():
+        if 'created_datetime' in m_entry.keys():
+            m_entry.pop('created_datetime', None)
+        entry['source_item_submission_date'] = d.fromtimestamp(m_entry['created_t'])
+#            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
+    else:
+        entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
+#            entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
+        if 'created_datetime' in m_entry.keys():
+            m_entry.pop('created_t', None)
+        else:
+            print("Submission date failure")
+            kill_flag = True
+    if 'last_modified_t' in m_entry.keys():
+        if 'last_modified_datetime' in m_entry.keys():
+            m_entry.pop('last_modified_datetime', None)
+        entry['source_item_publication_date'] = d.strftime(d.fromtimestamp(m_entry['last_modified_t']), '%Y-%m-%d')
+    else:
+        entry['source_item_publication_date'] = d.strftime(d.fromisoformat(m_entry['last_modified_datetime']), '%Y-%m-%d')
+        if 'last_modified_datetime' in m_entry.keys():
+            m_entry.pop('last_modified_t', None)
+        else:
+            print("Publication date failure")
+            kill_flag = True
+    if kill_flag:
+        print(f"Kill flag set for {m_entry['_id']}")
+    else:
+        for db_field in db_fields:
+            if db_field not in entry.keys():
+                entry[db_field] = m_entry[db_mapping[db_field]]
+        print(entry)
+        upsert_off_entry(entry)
 
 
 ### Update metadata after OFF update
