@@ -113,6 +113,8 @@ def validate_upc(code):
         u_match = p_UPC.search(str(code)).group()
     else:
         return None
+    if len(str(int(str(code)))) < 11:
+        return None
     if p_UPC.match(u_match):
         u_match = "0"+u_match
     return u_match
@@ -143,7 +145,7 @@ def upsert_off_entry(entry):
         """,
         (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
         )
-        print(db_cur.query)
+        print(db_cur.query.decode('ascii'))
         print(db_cur.fetchall())
     db_conn.close()
 
