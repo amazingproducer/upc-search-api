@@ -209,7 +209,7 @@ for m_d in m_dataset:
         for db_field in db_fields:
             if db_field not in entry.keys():
                 entry[db_field] = m_entry[db_mapping[db_field]]
-#        print(entry)
+        print(entry)
         upsert_off_entry(entry)
 
 
