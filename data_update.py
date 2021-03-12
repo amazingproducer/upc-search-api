@@ -166,13 +166,13 @@ for m_d in m_dataset:
         if i in m_d.keys():
             m_entry[i] = m_d[i]
     if 'product_name' not in m_entry.keys():
-#        print("Product name failure")
+        print("Product name failure")
         kill_flag = True
     elif not m_entry['product_name']:
-#        print("Product name absent")
+        print("Product name absent")
         kill_flag = True
     if validate_upc(m_entry['code']) == None:
-#        print("UPC failure")
+        print("UPC failure")
         kill_flag = True
     else:
         m_entry['code'] = validate_upc(m_entry['code'])
@@ -199,8 +199,10 @@ for m_d in m_dataset:
             entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
         else:
             m_entry.pop('created_datetime', None)
-            kill_flag = True        
+            kill_flag = True
+            print('Submission date failure')
     else:
+        print('Submission date failure')
         kill_flag = True
     if 'last_modified_t' in m_entry.keys():
         if m_entry['last_modified_t']:
@@ -214,8 +216,10 @@ for m_d in m_dataset:
             entry['source_item_publication_date'] = d.fromisoformat(m_entry['last_modified_datetime'])
         else:
             m_entry.pop('last_modified_datetime', None)
+            print('Last Modified date failure')
             kill_flag = True
     else:
+        print('Last modified date failure')
         kill_flag = True
     if kill_flag:
         kill_count += 1
