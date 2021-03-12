@@ -23,34 +23,34 @@ if version < (3, 6):
 
 upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 
-### Setup database if it's empty
-# connection = None
-# try: 
-#     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-# except:
-#     print('DB connection failed.')
-#     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='postgres')
-#     db_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-#     with db_conn.cursor() as db_cur:
-#         db_cur.execute('CREATE DATABASE upc_data')
-#     db_conn.close()
-#     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-#     with db_conn.cursor() as db_cur:
-#         with open('upc_dataset.sql', 'r') as sqlfile:
-#             db_cur.execute(sqlfile.read())
-#             db_conn.commit()
+## Setup database if it's empty
+connection = None
+try: 
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+except:
+    print('DB connection failed.')
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='postgres')
+    db_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+    with db_conn.cursor() as db_cur:
+        db_cur.execute('CREATE DATABASE upc_data')
+    db_conn.close()
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    with db_conn.cursor() as db_cur:
+        with open('upc_dataset.sql', 'r') as sqlfile:
+            db_cur.execute(sqlfile.read())
+            db_conn.commit()
 
-# db_conn.close()
+db_conn.close()
 
-# ### get dataset_source_meta table
-# ds_meta = None
-# db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-# with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
-#     db_cur.execute('SELECT * FROM dataset_source_meta')
-#     ds_meta = [row._asdict() for row in db_cur]
+### get dataset_source_meta table
+ds_meta = None
+db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
+    db_cur.execute('SELECT * FROM dataset_source_meta')
+    ds_meta = [row._asdict() for row in db_cur]
 
-# db_conn.close()
-# print(f"Dataset Source Metadata:\n{ds_meta}")
+db_conn.close()
+print(f"Dataset Source Metadata:\n{ds_meta}")
 
 # ### GET INFO ABOUT OPENFOODFACTS DATA
 # def is_hexadecimal(string):
@@ -90,85 +90,85 @@ upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 #         print(f"Elapsed time: {dt.now() - sb_off_start}")
 
 
-### Use PyMongo to access retrieved OpenFoodFacts data
-m_client = pymongo.MongoClient()
-m_db = m_client['off_temp']
-off_collection = m_db['product_info']
-m_dataset = off_collection.find({})
-#print(m_dataset[3]['code'])
-chz = 500000
+# ### Use PyMongo to access retrieved OpenFoodFacts data
+# m_client = pymongo.MongoClient()
+# m_db = m_client['off_temp']
+# off_collection = m_db['product_info']
+# m_dataset = off_collection.find({})
+# #print(m_dataset[3]['code'])
+# chz = 500000
 
-def validate_upc(code):
-    p_EAN = re.compile('\d{13}$')
-    p_UPC = re.compile('\d{12}$')
-    if p_EAN.search(str(code)):
-        u_match = p_EAN.search(str(code)).group()
-    elif p_UPC.search(str(code)):
-        u_match = p_UPC.search(str(code)).group()
-    else:
-        return None
-    if p_UPC.match(u_match):
-        u_match = "0"+u_match
-    return u_match
+# def validate_upc(code):
+#     p_EAN = re.compile('\d{13}$')
+#     p_UPC = re.compile('\d{12}$')
+#     if p_EAN.search(str(code)):
+#         u_match = p_EAN.search(str(code)).group()
+#     elif p_UPC.search(str(code)):
+#         u_match = p_UPC.search(str(code)).group()
+#     else:
+#         return None
+#     if p_UPC.match(u_match):
+#         u_match = "0"+u_match
+#     return u_match
 
-m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
-db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
-db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
-for m_d in m_dataset:
-    if chz > 0:
-        chz -= 1
-        m_entry = {}
-        entry = {}
-        kill_flag = False
-        for i in m_fields:
-            if i in m_d.keys():
-                m_entry[i] = m_d[i]
-        if 'product_name' not in m_entry.keys():
-            print("product name absent")
-            kill_flag = True
-        elif not m_entry['product_name']:
-            print("product name failure")
-            kill_flag = True
-        if 'code' in m_entry.keys() and m_entry['code']:
-            m_entry['code'] = validate_upc(m_entry['code'])
-        else:
-            kill_flag = True
+# m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
+# db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
+# db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
+# for m_d in m_dataset:
+#     if chz > 0:
+#         chz -= 1
+#         m_entry = {}
+#         entry = {}
+#         kill_flag = False
+#         for i in m_fields:
+#             if i in m_d.keys():
+#                 m_entry[i] = m_d[i]
+#         if 'product_name' not in m_entry.keys():
+#             print("product name absent")
+#             kill_flag = True
+#         elif not m_entry['product_name']:
+#             print("product name failure")
+#             kill_flag = True
+#         if 'code' in m_entry.keys() and m_entry['code']:
+#             m_entry['code'] = validate_upc(m_entry['code'])
+#         else:
+#             kill_flag = True
 
-        if 'created_t' in m_entry.keys():
-            if 'created_datetime' in m_entry.keys():
-                m_entry.pop('created_datetime', None)
-            entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
-        else:
-            entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
-            if 'created_datetime' in m_entry.keys():
-                m_entry.pop('created_t', None)
-            else:
-                kill_flag = True
-        if 'last_modified_t' in m_entry.keys():
-            if 'last_modified_datetime' in m_entry.keys():
-                m_entry.pop('last_modified_datetime', None)
-            entry['source_item_publication_date'] = d.strftime(d.fromtimestamp(m_entry['last_modified_t']), '%Y-%m-%d')
-        else:
-            entry['source_item_publication_date'] = d.strftime(d.fromisoformat(m_entry['last_modified_datetime']), '%Y-%m-%d')
-            if 'last_modified_datetime' in m_entry.keys():
-                m_entry.pop('last_modified_t', None)
-            else:
-                kill_flag = True
-        if kill_flag:
-            poop = None
-            print(f"Kill flag set for {m_entry['_id']}")
-        else:
-            for k in m_entry.keys():
-                for j in db_mapping:
-                    if db_mapping[j] == k:
-                        entry[j] = m_entry[k]
-            entry['upc'] = m_entry['code']
-            entry['source'] = 'off'
-            entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
-            # create an upsert function to call here
-            print(entry)
-    else:
-        break
+#         if 'created_t' in m_entry.keys():
+#             if 'created_datetime' in m_entry.keys():
+#                 m_entry.pop('created_datetime', None)
+#             entry['source_item_submission_date'] = d.strftime(d.fromtimestamp(m_entry['created_t']), '%Y-%m-%d')
+#         else:
+#             entry['source_item_submission_date'] = d.strftime(d.fromisoformat(m_entry['created_datetime']), '%Y-%m-%d')
+#             if 'created_datetime' in m_entry.keys():
+#                 m_entry.pop('created_t', None)
+#             else:
+#                 kill_flag = True
+#         if 'last_modified_t' in m_entry.keys():
+#             if 'last_modified_datetime' in m_entry.keys():
+#                 m_entry.pop('last_modified_datetime', None)
+#             entry['source_item_publication_date'] = d.strftime(d.fromtimestamp(m_entry['last_modified_t']), '%Y-%m-%d')
+#         else:
+#             entry['source_item_publication_date'] = d.strftime(d.fromisoformat(m_entry['last_modified_datetime']), '%Y-%m-%d')
+#             if 'last_modified_datetime' in m_entry.keys():
+#                 m_entry.pop('last_modified_t', None)
+#             else:
+#                 kill_flag = True
+#         if kill_flag:
+#             poop = None
+#             print(f"Kill flag set for {m_entry['_id']}")
+#         else:
+#             for k in m_entry.keys():
+#                 for j in db_mapping:
+#                     if db_mapping[j] == k:
+#                         entry[j] = m_entry[k]
+#             entry['upc'] = m_entry['code']
+#             entry['source'] = 'off'
+#             entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
+#             # create an upsert function to call here
+#             print(entry)
+#     else:
+#         break
 
 
 ## GET INFO ABOUT USDA DATA:
