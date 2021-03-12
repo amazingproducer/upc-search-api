@@ -122,6 +122,8 @@ for m_d in m_dataset:
         m_entry = {}
         entry = {}
         kill_flag = False
+        entry['source'] = 'off'
+        entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
         for i in m_fields:
             if i in m_d.keys():
                 m_entry[i] = m_d[i]
@@ -164,8 +166,6 @@ for m_d in m_dataset:
             for db_field in db_fields:
                 if db_field not in entry.keys():
                     entry[db_field] = m_entry[db_mapping[db_field]]
-            entry['source'] = 'off'
-            entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
             print(entry)
             upsert_off_entry(entry)
     else:
