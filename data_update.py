@@ -176,6 +176,7 @@ print(f"Dataset Source Metadata:\n{ds_meta}")
 usda_current_version_date = None
 usda_dataset_index_url = None
 usda_dataset_index_raw = None
+print(ds_meta)
 for i in ds_meta:
     if i['source_name'] == 'off':
         usda_current_version_date = i['current_version_date']
@@ -209,7 +210,7 @@ if usda_current_version_date == None or latest_date > usda_current_version_date:
 ## grab the latest archive and extract it. 
 #import subprocess
 
-usda_sp = subprocess.run(["./get_USDA_update.sh", latest_url])
+usda_sp = subprocess.run(["get_USDA_update.sh", latest_url])
 if usda_sp.returncode == 0:
     print("USDA Data Update Acquired.")
 else:
