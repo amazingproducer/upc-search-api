@@ -98,6 +98,10 @@ m_dataset = off_collection.find({})
 row_count = off_collection.estimated_document_count()
 count = 0
 
+m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
+db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
+db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
+
 def validate_upc(code):
     p_EAN = re.compile('\d{13}$')
     p_UPC = re.compile('\d{12}$')
@@ -140,9 +144,6 @@ def upsert_off_entry(entry):
         (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['category'], entry['db_entry_date'], entry['source_item_submission_date'], entry['source_item_publication_date'], entry['serving_size_fulltext'])
         )
 
-m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
-db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
-db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
 start_time = dt.now()
 for m_d in m_dataset:
     count += 1
