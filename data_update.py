@@ -172,7 +172,7 @@ for m_d in m_dataset:
         break
 
 ### Upsert OpenFoodFacts entries
-def upsert_off_entry(entry)
+def upsert_off_entry(entry):
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
     db_conn.autocommit = True
     with db_conn.cursor() as db_cur:
