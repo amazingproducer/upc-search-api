@@ -385,7 +385,7 @@ with db_conn.cursor() as db_cur:
     SET current_version_url = %s,
     last_update_check = %s
     WHERE
-    source_name = = %s;
+    source_name = %s;
     """,
     (d.today(), d.today(), 'usda')
     )
