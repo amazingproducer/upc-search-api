@@ -362,12 +362,6 @@ if usda_update_required:
         print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
 
 ### process acquired USDA files
-# fn_file = open('food.csv', 'r')
-# fn = csv.DictReader(fn_file)
-
-# bf_file = open('branded_food.csv', 'r')
-# bf = csv.DictReader(bf_file)
-
 if usda_update_required:
     food_names = []
     food_data = []
