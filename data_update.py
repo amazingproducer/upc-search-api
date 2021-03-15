@@ -338,24 +338,24 @@ class USDAIndexParser(HTMLParser):
 
 usda_parser = USDAIndexParser()
 usda_parser.feed(usda_dataset_index_raw)
-latest_date = None
-latest_url = None
+usda_latest_date = None
+usda_latest_url = None
 for i in USDAIndexParser.dataset_list:
     i_formatted = unquote(i).replace(" ", "")
     date_string = i_formatted.strip(".zip").strip("FoodData_Central_csv")
     date_object = d.fromisoformat(date_string)
-    if latest_date == None or date_object > latest_date:
-        latest_date = date_object
-        latest_url = usda_dataset_index_url + i
-        print(f"Latest URL: {latest_url}")
+    if usda_latest_date == None or date_object > usda_latest_date:
+        usda_latest_date = date_object
+        usda_latest_url = usda_dataset_index_url + i
+        print(f"Latest URL: {usda_latest_url}")
 
-if usda_current_version_date == None or latest_date > usda_current_version_date:
+if usda_current_version_date == None or usda_latest_date > usda_current_version_date:
     print("USDA dataset update available.")
     usda_update_required = True
 
 ## grab the latest archive and extract it. 
 if usda_update_required:
-    usda_sp = subprocess.run(["./get_USDA_update.sh", latest_url])
+    usda_sp = subprocess.run(["./get_USDA_update.sh", usda_latest_url])
     if usda_sp.returncode == 0:
         print("USDA Data Update Acquired.")
     else:
@@ -456,11 +456,12 @@ if usda_update_required:
         db_cur.execute("""
         UPDATE dataset_source_meta
         SET current_version_date = %s,
+        current_version_url = %s,
         last_update_check = %s
         WHERE
         source_name = %s;
         """,
-        (d.today(), d.today(), 'usda')
+        (usda_latest_date, usda_latest_url, d.today(), 'usda')
         )
     db_conn.close()
 
