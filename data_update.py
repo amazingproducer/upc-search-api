@@ -146,7 +146,7 @@ for i in ds_meta:
 
 print(f"Current Version Date: {off_current_version_date}")
 print(f"Last Check Date: {off_last_check_date}")
-print(f"Current Version Age: {d.today() - off_current_version_date}")
+print(f"Current Version Age: {(d.today() - off_current_version_date).days}")
 print(f"Minimum Version Age: {update_interval}")
 print(f"Updated in last 30 days: {d.today() - off_current_version_date > update_interval}")
 
