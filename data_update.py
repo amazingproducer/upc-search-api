@@ -144,6 +144,10 @@ for i in ds_meta:
         off_last_check_date = i['last_update_check']
         off_current_version_date = i['current_version_date']
 
+print(f"Current Version Date: {off_current_version_date}")
+print(f"Last Version Date: {off_last_update_check}")
+print(f"Updated in last 30 days: {d.today() - off_current_version_date > update_interval}")
+
 if not off_last_check_date:
     off_update_required = True
 else:
