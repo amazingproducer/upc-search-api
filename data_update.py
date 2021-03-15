@@ -118,7 +118,7 @@ with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
     chz = 25
     while chz > 0:
         for row in u_dict:
-            --chz
+            chz -= 1
             print(row['UPCEAN'], row['Name'], row['BrandName'])
 
 
