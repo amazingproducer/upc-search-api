@@ -223,7 +223,7 @@ db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_da
 db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
 
 ### process and upsert OpenFoodfacts data
-if off_update_required = True:
+if off_update_required == True:
     start_time = dt.now()
     for m_d in m_dataset:
         count += 1
