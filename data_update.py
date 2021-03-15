@@ -116,8 +116,8 @@ if u_update_required:
 with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
     u_dict = csv.DictReader(u_file, delimiter='\t')
     chz = 25
-    while chz > 0:
-        for row in u_dict:
+    for row in u_dict:
+        while chz > 0:
             chz -= 1
             print(row['UPCEAN'], row['Name'], row['BrandName'])
 
