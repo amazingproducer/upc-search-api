@@ -151,16 +151,13 @@ for i in ds_meta:
 # print(f"Updated in last 30 days: {(d.today() - off_current_version_date) > (update_interval).days}")
 
 if not off_last_check_date:
-    print('update_required')
+    print('OFF update_required')
     off_update_required = True
 else:
     update_age = d.today() - off_current_version_date
-    print(f"update_age: {update_age.days} ({type(update_age.days)})")
-    print(f"update_interval: {update_interval.days} ({type(update_interval.days)})")
-
     if update_age.days > update_interval.days:
         off_update_required = True
-        print("update required")
+        print("OFF update required")
         try:
             r = requests.get(off_update_hash_url)
             off_update_hash = r.text.split(" ")[0]
@@ -181,18 +178,7 @@ if off_update_hash and off_update_required:
             print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
         print(f"Elapsed time: {dt.now() - sp_off_start}")
 
-## Use PyMongo to access retrieved OpenFoodFacts data
-m_client = pymongo.MongoClient()
-m_db = m_client['off_temp']
-off_collection = m_db['product_info']
-m_dataset = off_collection.find({})
-row_count = off_collection.estimated_document_count()
-count = 0
-kill_count = 0
 
-m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
-db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
-db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
 
 ### Upsert OpenFoodFacts entries
 def upsert_off_entry(entry):
@@ -223,78 +209,93 @@ def upsert_off_entry(entry):
 #        print(db_cur.query.decode('utf-8'))
     db_conn.close()
 
-start_time = dt.now()
-for m_d in m_dataset:
-    count += 1
-    m_entry = {}
-    entry = {}
-    kill_flag = False
-    entry['source'] = 'off'
-    entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
-    if not count % 1000:
-        current_time = dt.now()
-        print(f"Processed {count} out of {row_count} rows, rejecting {kill_count} rows, {current_time - start_time} elapsed.")
-    for i in m_fields:
-        if i in m_d.keys():
-            m_entry[i] = m_d[i]
-    if 'product_name' not in m_entry.keys():
-#        print("Product name failure")
-        kill_flag = True
-    elif not m_entry['product_name']:
-#        print("Product name absent")
-        kill_flag = True
-    if validate_upc(m_entry['code']) == None:
-#        print("UPC failure")
-        kill_flag = True
-    else:
-        m_entry['code'] = validate_upc(m_entry['code'])
-        entry['upc'] = validate_upc(m_entry['code'])
-    if "categories_tags" in m_entry.keys():
-        if m_entry['categories_tags'] == None:
-            entry['category'] = m_entry['categories_tags']
-    else:
-        entry['category'] = None
-    if "serving_size" in m_entry.keys():
-        if m_entry['serving_size'] == None:
-            entry['serving_size_fulltext'] = m_entry["serving_size"]
-    else:
-        entry['serving_size_fulltext'] = None
-    if 'created_t' in m_entry.keys():
-        if m_entry['created_t']:
-            entry['source_item_submission_date'] = d.fromtimestamp(m_entry['created_t'])
-            if 'created_datetime' in m_entry.keys():
-                m_entry.pop('created_datetime', None)   
+## Use PyMongo to access retrieved OpenFoodFacts data
+m_client = pymongo.MongoClient()
+m_db = m_client['off_temp']
+off_collection = m_db['product_info']
+m_dataset = off_collection.find({})
+row_count = off_collection.estimated_document_count()
+count = 0
+kill_count = 0
+
+m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
+db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
+db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
+
+### process and upsert OpenFoodfacts data
+if off_update_required = True:
+    start_time = dt.now()
+    for m_d in m_dataset:
+        count += 1
+        m_entry = {}
+        entry = {}
+        kill_flag = False
+        entry['source'] = 'off'
+        entry['db_entry_date'] = d.strftime(d.today(), '%Y-%m-%d')
+        if not count % 1000:
+            current_time = dt.now()
+            print(f"Processed {count} out of {row_count} rows, rejecting {kill_count} rows, {current_time - start_time} elapsed.")
+        for i in m_fields:
+            if i in m_d.keys():
+                m_entry[i] = m_d[i]
+        if 'product_name' not in m_entry.keys():
+    #        print("Product name failure")
+            kill_flag = True
+        elif not m_entry['product_name']:
+    #        print("Product name absent")
+            kill_flag = True
+        if validate_upc(m_entry['code']) == None:
+    #        print("UPC failure")
+            kill_flag = True
         else:
-            m_entry.pop('created_t', None)
-            if 'created_datetime' in m_entry.keys():
-                if m_entry['created_datetime']:
-                    entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
-                else:
-                    m_entry.pop('created_datetime', None)
-                    kill_flag = True
-#                    print('Submission date failure')
-    if 'last_modified_t' in m_entry.keys():
-        if m_entry['last_modified_t']:
-            entry['source_item_publication_date'] = d.fromtimestamp(m_entry['last_modified_t'])
-            if 'last_modified_datetime' in m_entry.keys():
-                m_entry.pop('last_modified_datetime', None)
+            m_entry['code'] = validate_upc(m_entry['code'])
+            entry['upc'] = validate_upc(m_entry['code'])
+        if "categories_tags" in m_entry.keys():
+            if m_entry['categories_tags'] == None:
+                entry['category'] = m_entry['categories_tags']
         else:
-            m_entry.pop('last_modified_t', None)
-            if 'last_modified_datetime' in m_entry.keys():
-                if m_entry['last_modified_datetime']:
-                    entry['source_item_publication_date'] = d.fromisoformat(m_entry['last_modified_datetime'])
-                else:
+            entry['category'] = None
+        if "serving_size" in m_entry.keys():
+            if m_entry['serving_size'] == None:
+                entry['serving_size_fulltext'] = m_entry["serving_size"]
+        else:
+            entry['serving_size_fulltext'] = None
+        if 'created_t' in m_entry.keys():
+            if m_entry['created_t']:
+                entry['source_item_submission_date'] = d.fromtimestamp(m_entry['created_t'])
+                if 'created_datetime' in m_entry.keys():
+                    m_entry.pop('created_datetime', None)   
+            else:
+                m_entry.pop('created_t', None)
+                if 'created_datetime' in m_entry.keys():
+                    if m_entry['created_datetime']:
+                        entry['source_item_submission_date'] = d.fromisoformat(m_entry['created_datetime'])
+                    else:
+                        m_entry.pop('created_datetime', None)
+                        kill_flag = True
+    #                    print('Submission date failure')
+        if 'last_modified_t' in m_entry.keys():
+            if m_entry['last_modified_t']:
+                entry['source_item_publication_date'] = d.fromtimestamp(m_entry['last_modified_t'])
+                if 'last_modified_datetime' in m_entry.keys():
                     m_entry.pop('last_modified_datetime', None)
-#                    print('Last Modified date failure')
-                    kill_flag = True
-    if kill_flag:
-        kill_count += 1
-    else:
-        for db_field in db_fields:
-            if db_field not in entry.keys():
-                entry[db_field] = m_entry[db_mapping[db_field]]
-#        print(entry)
-        upsert_off_entry(entry)
+            else:
+                m_entry.pop('last_modified_t', None)
+                if 'last_modified_datetime' in m_entry.keys():
+                    if m_entry['last_modified_datetime']:
+                        entry['source_item_publication_date'] = d.fromisoformat(m_entry['last_modified_datetime'])
+                    else:
+                        m_entry.pop('last_modified_datetime', None)
+    #                    print('Last Modified date failure')
+                        kill_flag = True
+        if kill_flag:
+            kill_count += 1
+        else:
+            for db_field in db_fields:
+                if db_field not in entry.keys():
+                    entry[db_field] = m_entry[db_mapping[db_field]]
+    #        print(entry)
+            upsert_off_entry(entry)
 
 
 ### Update metadata after OFF update
