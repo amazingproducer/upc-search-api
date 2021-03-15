@@ -54,6 +54,36 @@ with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
 db_conn.close()
 print(f"Dataset Source Metadata:\n{ds_meta}")
 
+
+## GET INFO ABOUT UHTT DATA
+uhtt_current_release = None
+uhtt_current_date = None
+uhtt_last_check_date = None
+uhtt_refresh_check_url = None
+for i in ds_meta:
+    if i['source_name'] = 'off':
+        uhtt_current_release = i['current_version_release_name']
+        uhtt_current_version_url = i['current_version_url']
+        uhtt_current_date = i['current_version_date']
+        uhtt_last_check_date = i['last_update_check']
+        uhtt_refresh_check_url = i['refresh_check_url']
+
+try:
+    u_r = requests.get(uhtt_refresh_check_url).json()
+except requests.exceptions.RequestException as e:
+    print("UHTT update check failed.")
+
+u_update_required = False
+for i in u_r:
+    if not uhtt_current_date or d.fromisoformat(i['published_at'].split('T')[0]) > uhtt_current_date:
+    if not uhtt_current_date:
+        uhtt_current_date = i['published_at'].split('T')[0]
+        uhtt_current_release = i['tag_name']
+        uhtt_last_check_date = d.today()
+        uhtt_current_version_url = i['tarball_url']
+        u_update_required = True
+
+
 ## GET INFO ABOUT OPENFOODFACTS DATA
 def is_hexadecimal(string):
     "Check each character in a string against the hexadecimal character set."
@@ -64,11 +94,13 @@ off_current_hash = None
 off_update_hash = None
 off_current_version_url = None
 off_update_hash_url = None
+off_last_check_date = None
 for i in ds_meta:
     if i['source_name'] == 'off':
         off_current_hash = i["current_version_hash"]
         off_update_hash_url = i["refresh_check_url"]
         off_current_version_url = i["current_version_url"]
+        off_last_check_date = i['last_update_check']
 
 try:
     r = requests.get(off_update_hash_url)
@@ -382,7 +414,7 @@ db_conn.autocommit = True
 with db_conn.cursor() as db_cur:
     db_cur.execute("""
     UPDATE dataset_source_meta
-    SET current_version_url = %s,
+    SET current_version_date = %s,
     last_update_check = %s
     WHERE
     source_name = %s;
