@@ -12,6 +12,7 @@ from urllib.parse import unquote
 from html.parser import HTMLParser
 from datetime import date as d
 from datetime import datetime as dt
+from datetime import timedelta as td
 import subprocess
 from os import getenv
 
@@ -22,6 +23,7 @@ if version < (3, 6):
     quit()
 
 upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
+update_interval = td(days=30)
 
 ## Setup database if it's empty
 connection = None
@@ -55,96 +57,6 @@ db_conn.close()
 #print(f"Dataset Source Metadata:\n{ds_meta}")
 
 
-## GET INFO ABOUT UHTT DATA
-uhtt_current_release = None
-uhtt_current_date = None
-uhtt_last_check_date = None
-uhtt_refresh_check_url = None
-for i in ds_meta:
-    if i['source_name'] == 'uhtt':
-        uhtt_current_release = i['current_version_release_name']
-        uhtt_current_version_url = i['current_version_url']
-        uhtt_current_date = i['current_version_date']
-        uhtt_last_check_date = i['last_update_check']
-        uhtt_refresh_check_url = i['refresh_check_url']
-
-try:
-    u_r = requests.get(uhtt_refresh_check_url).json()
-except requests.exceptions.RequestException as e:
-    print("UHTT update check failed.", e)
-
-u_update_required = False
-if not uhtt_current_date or d.fromisoformat(u_r[0]['published_at'].split('T')[0]) > d.fromisoformat(uhtt_current_date):
-    uhtt_current_date = d.fromisoformat(u_r[0]['published_at'].split('T')[0])
-    uhtt_current_release = u_r[0]['tag_name']
-    uhtt_last_check_date = d.today()
-    for i in u_r[0]['assets']:
-        if i['browser_download_url'].endswith('.7z'):
-            uhtt_current_version_url = i['browser_download_url']
-            u_update_required = True
-
-if u_update_required:
-    sp_u_start = dt.now()
-    u_sp = subprocess.run("./get_UHTT_update.sh")
-    if u_sp.returncode == 0:
-        print("UHTT Data Update Acquired.")
-    else:
-        print(f"UHTT Data Update Failed (exit code {u_sp.returncode}).")
-    print(f"Elapsed time: {dt.now() - sp_u_start}")
-
-## GET INFO ABOUT OPENFOODFACTS DATA
-def is_hexadecimal(string):
-    "Check each character in a string against the hexadecimal character set."
-    return all(char in set(hexdigits) for char in string)
-
-
-off_current_hash = None
-off_update_hash = None
-off_current_version_url = None
-off_update_hash_url = None
-off_last_check_date = None
-for i in ds_meta:
-    if i['source_name'] == 'off':
-        off_current_hash = i["current_version_hash"]
-        off_update_hash_url = i["refresh_check_url"]
-        off_current_version_url = i["current_version_url"]
-        off_last_check_date = i['last_update_check']
-
-try:
-    r = requests.get(off_update_hash_url)
-    off_update_hash = r.text.split(" ")[0]
-    if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
-        print("Retrieved OFF update checksum is not a SHA-256 hash.")
-        off_update_hash = None
-    print("OFF update checksum retrieval succeeded.")
-except requests.exceptions.RequestException as e:
-    print("OFF update checksum retrieval failed.", e)
-    off_update_hash = None
-
-if off_update_hash:
-    if not off_current_hash or off_current_hash != off_update_hash:
-        sp_off_start = dt.now()
-        off_sp = subprocess.run("./get_OFF_update.sh")
-        if off_sp.returncode == 0:
-            print("OpenFoodFacts Data Update Acquired.")
-        else:
-            print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
-        print(f"Elapsed time: {dt.now() - sp_off_start}")
-
-
-## Use PyMongo to access retrieved OpenFoodFacts data
-m_client = pymongo.MongoClient()
-m_db = m_client['off_temp']
-off_collection = m_db['product_info']
-m_dataset = off_collection.find({})
-row_count = off_collection.estimated_document_count()
-count = 0
-kill_count = 0
-
-m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
-db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
-db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
-
 def validate_upc(code):
     p_EAN = re.compile('\d{13}$')
     p_UPC = re.compile('\d{12}$')
@@ -163,6 +75,111 @@ def validate_upc(code):
     if p_UPC.match(u_match):
         u_match = "0"+u_match
     return u_match
+
+
+## GET INFO ABOUT UHTT DATA
+uhtt_current_release = None
+uhtt_current_date = None
+uhtt_last_check_date = None
+uhtt_refresh_check_url = None
+for i in ds_meta:
+    if i['source_name'] == 'uhtt':
+        uhtt_current_release = i['current_version_release_name']
+        uhtt_current_version_url = i['current_version_url']
+        uhtt_current_date = i['current_version_date']
+        uhtt_last_check_date = i['last_update_check']
+        uhtt_refresh_check_url = i['refresh_check_url']
+try:
+    u_r = requests.get(uhtt_refresh_check_url).json()
+except requests.exceptions.RequestException as e:
+    print("UHTT update check failed.", e)
+
+u_update_required = False
+if not uhtt_current_date or d.fromisoformat(u_r[0]['published_at'].split('T')[0]) > d.fromisoformat(uhtt_current_date):
+    uhtt_current_date = d.fromisoformat(u_r[0]['published_at'].split('T')[0])
+    uhtt_current_release = u_r[0]['tag_name']
+    uhtt_last_check_date = d.today()
+    for i in u_r[0]['assets']:
+        if i['browser_download_url'].endswith('.7z'):
+            uhtt_current_version_url = i['browser_download_url']
+            u_update_required = True
+if u_update_required:
+    sp_u_start = dt.now()
+    u_sp = subprocess.run("./get_UHTT_update.sh")
+    if u_sp.returncode == 0:
+        print("UHTT Data Update Acquired.")
+    else:
+        print(f"UHTT Data Update Failed (exit code {u_sp.returncode}).")
+    print(f"Elapsed time: {dt.now() - sp_u_start}")
+
+### Process Acquired Source
+with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
+    u_dict = csv.DictReader(u_file, delimiter='\t')
+    chz = 25
+    for row in u_dict:
+        while chz > 0:
+            chz --
+            print(row['UPCEAN'], row['Name'], row['BrandName'])
+
+
+
+## GET INFO ABOUT OPENFOODFACTS DATA
+def is_hexadecimal(string):
+    "Check each character in a string against the hexadecimal character set."
+    return all(char in set(hexdigits) for char in string)
+
+
+off_current_hash = None
+off_update_hash = None
+off_current_version_url = None
+off_update_hash_url = None
+off_last_check_date = None
+off_update_required = False
+for i in ds_meta:
+    if i['source_name'] == 'off':
+        off_current_hash = i["current_version_hash"]
+        off_update_hash_url = i["refresh_check_url"]
+        off_current_version_url = i["current_version_url"]
+        off_last_check_date = i['last_update_check']
+        off_current_version_date = i['current_version_date']
+
+if not off_last_check_date:
+    off_update_required = True
+else:
+    if d.today() - d.fromisoformat(off_current_version_date) > update_interval:
+        off_update_required = True
+        try:
+            r = requests.get(off_update_hash_url)
+            off_update_hash = r.text.split(" ")[0]
+            if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
+                print("Retrieved OFF update checksum is not a SHA-256 hash.")
+                off_update_hash = None
+            print("OFF update checksum retrieval succeeded.")
+        except requests.exceptions.RequestException as e:
+            print("OFF update checksum retrieval failed.", e)
+            off_update_hash = None
+if off_update_hash and off_update_required:
+    if not off_current_hash or off_current_hash != off_update_hash:
+        sp_off_start = dt.now()
+        off_sp = subprocess.run("./get_OFF_update.sh")
+        if off_sp.returncode == 0:
+            print("OpenFoodFacts Data Update Acquired.")
+        else:
+            print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
+        print(f"Elapsed time: {dt.now() - sp_off_start}")
+
+## Use PyMongo to access retrieved OpenFoodFacts data
+m_client = pymongo.MongoClient()
+m_db = m_client['off_temp']
+off_collection = m_db['product_info']
+m_dataset = off_collection.find({})
+row_count = off_collection.estimated_document_count()
+count = 0
+kill_count = 0
+
+m_fields = ['_id', 'code', 'product_name', 'categories_tags', 'created_t', 'created_datetime', 'last_modified_t', 'last_modified_datetime', 'serving_size']
+db_fields = ['source', 'source_item_id', 'upc', 'name', 'category', 'db_entry_date', 'source_item_submission_date', 'source_item_publication_date', 'serving_size_fulltext']
+db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'product_name', 'category':'categories_tags', 'db_entry_date':None, 'source_item_submission_date':None, 'source_item_publication_date':None, 'serving_size_fulltext':'serving_size'}
 
 ### Upsert OpenFoodFacts entries
 def upsert_off_entry(entry):
@@ -319,8 +336,6 @@ if usda_current_version_date == None or latest_date > usda_current_version_date:
     print("USDA dataset update available.")
 
 ## grab the latest archive and extract it. 
-#import subprocess
-
 usda_sp = subprocess.run(["./get_USDA_update.sh", latest_url])
 if usda_sp.returncode == 0:
     print("USDA Data Update Acquired.")
@@ -328,8 +343,6 @@ else:
     print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
 
 ### process acquired USDA files
-# TODO: update the dataset_source_meta table with new source details
-
 fn_file = open('food.csv', 'r')
 fn = csv.DictReader(fn_file)
 
