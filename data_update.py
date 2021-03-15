@@ -151,13 +151,16 @@ for i in ds_meta:
 # print(f"Updated in last 30 days: {(d.today() - off_current_version_date) > (update_interval).days}")
 
 if not off_last_check_date:
+    print('update_required')
     off_update_required = True
 else:
     update_age = d.today() - off_current_version_date
     print(f"update_age: {update_age.days} ({type(update_age.days)})")
     print(f"update_interval: {update_interval.days} ({type(update_interval.days)})")
+
     if update_age.days > update_interval.days:
         off_update_required = True
+        print("update required")
         try:
             r = requests.get(off_update_hash_url)
             off_update_hash = r.text.split(" ")[0]
