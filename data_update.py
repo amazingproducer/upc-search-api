@@ -341,7 +341,7 @@ latest_url = None
 for i in USDAIndexParser.dataset_list:
     i_formatted = unquote(i).replace(" ", "")
     date_string = i_formatted.strip(".zip").strip("FoodData_Central_csv")
-    date_object = dt.strptime(date_string, "%Y-%m-%d")
+    date_object = d.fromisoformat(date_string)
     if latest_date == None or date_object > latest_date:
         latest_date = date_object
         latest_url = usda_dataset_index_url + i
