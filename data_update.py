@@ -362,111 +362,112 @@ if usda_update_required:
         print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
 
 ### process acquired USDA files
-fn_file = open('food.csv', 'r')
-fn = csv.DictReader(fn_file)
+# fn_file = open('food.csv', 'r')
+# fn = csv.DictReader(fn_file)
 
-bf_file = open('branded_food.csv', 'r')
-bf = csv.DictReader(bf_file)
+# bf_file = open('branded_food.csv', 'r')
+# bf = csv.DictReader(bf_file)
 
-food_names = []
-food_data = []
-row_count = None    
+if usda_update_required:
+    food_names = []
+    food_data = []
+    row_count = None    
 
-fieldnames = [
-    "source",
-    "source_item_id",
-    "upc",
-    "name",
-    "category",
-    "db_entry_date",
-    "source_item_submission_date",
-    "source_item_publication_date",
-    "serving_size",
-    "serving_size_unit"
-]
+    fieldnames = [
+        "source",
+        "source_item_id",
+        "upc",
+        "name",
+        "category",
+        "db_entry_date",
+        "source_item_submission_date",
+        "source_item_publication_date",
+        "serving_size",
+        "serving_size_unit"
+    ]
 
-db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-db_conn.autocommit = True
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
 
-with open('food.csv', 'r') as fn_file:
-    fn = csv.DictReader(fn_file)
-    for row in fn:
-        food_names.append({"fdc_id":row["fdc_id"], "product_name":row["description"], "publication_date":row["publication_date"]})
+    with open('food.csv', 'r') as fn_file:
+        fn = csv.DictReader(fn_file)
+        for row in fn:
+            food_names.append({"fdc_id":row["fdc_id"], "product_name":row["description"], "publication_date":row["publication_date"]})
 
-with open('branded_food.csv', 'r') as bf_file:
-    row_count = sum(1 for row in bf_file)
+    with open('branded_food.csv', 'r') as bf_file:
+        row_count = sum(1 for row in bf_file)
 
-with open('branded_food.csv', 'r') as bf_file:
-    bf = csv.DictReader(bf_file)
-    count = 0
-    start_time = dt.now()
-    for row in bf:
-        f_id = row["fdc_id"]
-        f_upc = validate_upc(row["gtin_upc"])
-        f_cat = [[row["branded_food_category"]], None][not row["branded_food_category"]]
-        f_ss = [row["serving_size"], None][not row["serving_size"]]
-        f_ssu = [row["serving_size_unit"], None][not row["serving_size_unit"]]
-        f_sd = row["available_date"]
-        count += 1
-        if not count % 1000:
-            current_time = dt.now()
-            print(f"Completed {count} out of {row_count} rows, {current_time - start_time} elapsed.")
-        if f_upc:
-            for entry in food_names:
-                if entry["fdc_id"] == f_id:
-                    f_pn = entry["product_name"]
-                    f_pd = entry["publication_date"]
-                    with db_conn.cursor() as db_cur:
-                        db_cur.execute(f"""
-                        INSERT INTO
-                        product_info ({', '.join(fieldnames)})
-                        VALUES
-                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT ON CONSTRAINT
-                        check_unique_composite
-                        DO
-                        UPDATE SET
-                        source_item_id = EXCLUDED.source_item_id,
-                        name = EXCLUDED.name,
-                        category = EXCLUDED.category,
-                        db_entry_date = EXCLUDED.db_entry_date,
-                        source_item_submission_date = EXCLUDED.source_item_submission_date,
-                        source_item_publication_date = EXCLUDED.source_item_publication_date,
-                        serving_size = EXCLUDED.serving_size,
-                        serving_size_unit = EXCLUDED.serving_size_unit
-                        WHERE
-                        EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
-                        """,
-                        ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu)
-                        )
-                        db_conn.commit()
+    with open('branded_food.csv', 'r') as bf_file:
+        bf = csv.DictReader(bf_file)
+        count = 0
+        start_time = dt.now()
+        for row in bf:
+            f_id = row["fdc_id"]
+            f_upc = validate_upc(row["gtin_upc"])
+            f_cat = [[row["branded_food_category"]], None][not row["branded_food_category"]]
+            f_ss = [row["serving_size"], None][not row["serving_size"]]
+            f_ssu = [row["serving_size_unit"], None][not row["serving_size_unit"]]
+            f_sd = row["available_date"]
+            count += 1
+            if not count % 1000:
+                current_time = dt.now()
+                print(f"Completed {count} out of {row_count} rows, {current_time - start_time} elapsed.")
+            if f_upc:
+                for entry in food_names:
+                    if entry["fdc_id"] == f_id:
+                        f_pn = entry["product_name"]
+                        f_pd = entry["publication_date"]
+                        with db_conn.cursor() as db_cur:
+                            db_cur.execute(f"""
+                            INSERT INTO
+                            product_info ({', '.join(fieldnames)})
+                            VALUES
+                            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT ON CONSTRAINT
+                            check_unique_composite
+                            DO
+                            UPDATE SET
+                            source_item_id = EXCLUDED.source_item_id,
+                            name = EXCLUDED.name,
+                            category = EXCLUDED.category,
+                            db_entry_date = EXCLUDED.db_entry_date,
+                            source_item_submission_date = EXCLUDED.source_item_submission_date,
+                            source_item_publication_date = EXCLUDED.source_item_publication_date,
+                            serving_size = EXCLUDED.serving_size,
+                            serving_size_unit = EXCLUDED.serving_size_unit
+                            WHERE
+                            EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
+                            """,
+                            ('usda', f_id, f_upc, f_pn, f_cat, d.today(), f_sd, f_pd, f_ss, f_ssu)
+                            )
+                            db_conn.commit()
 
-                    food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":d.today(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
-                    break
-    end_time = dt.now()
-    print(f"Elapsed time: {end_time - start_time}")
-db_conn.close()
-subprocess.run("./cleanup_USDA_update.sh")
+                        food_data.append({"source_item_id":f_id, "upc":f_upc, "name":f_pn, "category":f_cat, "db_entry_date":d.today(), "source_item_submission_date":f_sd, "source_item_publication_date":f_pd, "serving_size":f_ss, "serving_size_unit":f_ssu})
+                        break
+        end_time = dt.now()
+        print(f"Elapsed time: {end_time - start_time}")
+    db_conn.close()
+    subprocess.run("./cleanup_USDA_update.sh")
 
-### Update metadata after USDA update
-db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-db_conn.autocommit = True
-with db_conn.cursor() as db_cur:
-    db_cur.execute("""
-    UPDATE dataset_source_meta
-    SET current_version_date = %s,
-    last_update_check = %s
-    WHERE
-    source_name = %s;
-    """,
-    (d.today(), d.today(), 'usda')
-    )
-db_conn.close()
+    ### Update metadata after USDA update
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute("""
+        UPDATE dataset_source_meta
+        SET current_version_date = %s,
+        last_update_check = %s
+        WHERE
+        source_name = %s;
+        """,
+        (d.today(), d.today(), 'usda')
+        )
+    db_conn.close()
 
 
-## save the joined data to a csv in case we want it
-with open('newfile.csv', 'w') as newfile:
-    nd_w = csv.DictWriter(newfile, fieldnames=fieldnames)
-    nd_w.writeheader()
-    nd_w.writerows(food_data)
+    ## save the joined data to a csv in case we want it
+    with open('newfile.csv', 'w') as newfile:
+        nd_w = csv.DictWriter(newfile, fieldnames=fieldnames)
+        nd_w.writeheader()
+        nd_w.writerows(food_data)
 
