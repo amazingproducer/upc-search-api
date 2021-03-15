@@ -52,7 +52,7 @@ with db_conn.cursor(cursor_factory=ds_cur) as db_cur:
     ds_meta = [row._asdict() for row in db_cur]
 
 db_conn.close()
-print(f"Dataset Source Metadata:\n{ds_meta}")
+#print(f"Dataset Source Metadata:\n{ds_meta}")
 
 
 ## GET INFO ABOUT UHTT DATA
@@ -61,7 +61,7 @@ uhtt_current_date = None
 uhtt_last_check_date = None
 uhtt_refresh_check_url = None
 for i in ds_meta:
-    if i['source_name'] = 'off':
+    if i['source_name'] == 'uhtt':
         uhtt_current_release = i['current_version_release_name']
         uhtt_current_version_url = i['current_version_url']
         uhtt_current_date = i['current_version_date']
@@ -71,18 +71,26 @@ for i in ds_meta:
 try:
     u_r = requests.get(uhtt_refresh_check_url).json()
 except requests.exceptions.RequestException as e:
-    print("UHTT update check failed.")
+    print("UHTT update check failed.", e)
 
 u_update_required = False
-for i in u_r:
-    if not uhtt_current_date or d.fromisoformat(i['published_at'].split('T')[0]) > uhtt_current_date:
-    if not uhtt_current_date:
-        uhtt_current_date = i['published_at'].split('T')[0]
-        uhtt_current_release = i['tag_name']
-        uhtt_last_check_date = d.today()
-        uhtt_current_version_url = i['tarball_url']
-        u_update_required = True
+if not uhtt_current_date or d.fromisoformat(u_r[0]['published_at'].split('T')[0]) > d.fromisoformat(uhtt_current_date):
+    uhtt_current_date = d.fromisoformat(u_r[0]['published_at'].split('T')[0])
+    uhtt_current_release = u_r[0]['tag_name']
+    uhtt_last_check_date = d.today()
+    for i in u_r[0]['assets']:
+        if i['browser_download_url'].endswith('.7z'):
+            uhtt_current_version_url = i['browser_download_url']
+            u_update_required = True
 
+if u_update_required:
+    sp_u_start = dt.now()
+    u_sp = subprocess.run("./get_UHTT_update.sh")
+    if u_sp.returncode == 0:
+        print("UHTT Data Update Acquired.")
+    else:
+        print(f"UHTT Data Update Failed (exit code {u_sp.returncode}).")
+    print(f"Elapsed time: {dt.now() - sp_u_start}")
 
 ## GET INFO ABOUT OPENFOODFACTS DATA
 def is_hexadecimal(string):
@@ -115,13 +123,13 @@ except requests.exceptions.RequestException as e:
 
 if off_update_hash:
     if not off_current_hash or off_current_hash != off_update_hash:
-        sb_off_start = dt.now()
+        sp_off_start = dt.now()
         off_sp = subprocess.run("./get_OFF_update.sh")
         if off_sp.returncode == 0:
             print("OpenFoodFacts Data Update Acquired.")
         else:
             print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
-        print(f"Elapsed time: {dt.now() - sb_off_start}")
+        print(f"Elapsed time: {dt.now() - sp_off_start}")
 
 
 ## Use PyMongo to access retrieved OpenFoodFacts data
