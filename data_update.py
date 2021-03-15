@@ -319,11 +319,13 @@ db_conn.close()
 usda_current_version_date = None
 usda_dataset_index_url = None
 usda_dataset_index_raw = None
+usda_update_required = False
 for i in ds_meta:
     if i['source_name'] == 'usda':
         usda_current_version_date = i['current_version_date']
         usda_dataset_index_url = i["refresh_check_url"]
         usda_dataset_index_raw = requests.get(usda_dataset_index_url).text
+        usda_current_version_url = i['current_version_url']
 
 class USDAIndexParser(HTMLParser):
     dataset_list = []
@@ -345,16 +347,19 @@ for i in USDAIndexParser.dataset_list:
     if latest_date == None or date_object > latest_date:
         latest_date = date_object
         latest_url = usda_dataset_index_url + i
+        print(f"Latest URL: {latest_url}")
 
 if usda_current_version_date == None or latest_date > usda_current_version_date:
     print("USDA dataset update available.")
+    usda_update_required = True
 
 ## grab the latest archive and extract it. 
-usda_sp = subprocess.run(["./get_USDA_update.sh", latest_url])
-if usda_sp.returncode == 0:
-    print("USDA Data Update Acquired.")
-else:
-    print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
+if usda_update_required:
+    usda_sp = subprocess.run(["./get_USDA_update.sh", latest_url])
+    if usda_sp.returncode == 0:
+        print("USDA Data Update Acquired.")
+    else:
+        print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
 
 ### process acquired USDA files
 fn_file = open('food.csv', 'r')
