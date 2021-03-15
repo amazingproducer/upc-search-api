@@ -154,6 +154,8 @@ if not off_last_check_date:
     off_update_required = True
 else:
     update_age = d.today() - off_current_version_date
+    print(f"update_age: {update_age.days} ({type(update_age.days)})")
+    print(f"update_interval: {update_interval.days} ({type(update_interval.days)})")
     if update_age.days > update_interval.days:
         off_update_required = True
         try:
