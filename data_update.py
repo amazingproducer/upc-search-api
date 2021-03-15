@@ -144,12 +144,10 @@ for i in ds_meta:
         off_last_check_date = i['last_update_check']
         off_current_version_date = i['current_version_date']
 
-print(f"off_current_version_date: {off_current_version_date}, {type(off_current_version_date)}")
-
 if not off_last_check_date:
     off_update_required = True
 else:
-    if d.today() - d.fromisoformat(off_current_version_date) > update_interval:
+    if d.today() - off_current_version_date > update_interval:
         off_update_required = True
         try:
             r = requests.get(off_update_hash_url)
