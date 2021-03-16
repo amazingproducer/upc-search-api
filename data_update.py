@@ -145,6 +145,7 @@ if u_update_required:
     u_row_count = 0
     count = 0
     kill_count = 0
+    nonfood_count = 0
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
         u_row_count = sum(1 for lin in u_file)
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
@@ -169,10 +170,10 @@ if u_update_required:
                 else:
                     kill_count += 1
             else:
-                kill_count += 1
+                nonfood_count += 1
             if not count % 1000:
                 current_time = dt.now()
-                print(f"Processed {count} out of {u_row_count} rows, rejecting {kill_count}, {current_time - u_start_time} elapsed.")
+                print(f"Processed {count} out of {u_row_count} rows, rejecting {kill_count} sparse entries and {nonfood_count} non-food entries in {(current_time - u_start_time).minutes}.")
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
     ### Update metadata after OFF update
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
