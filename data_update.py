@@ -169,7 +169,7 @@ if u_update_required:
                     current_time = dt.now()
                     print(f"Completed {count} out of {u_row_count} rows, rejecting {kill_count}, {current_time - u_start_time} elapsed.")
             else:
-                print(f"Rejected: {entry['upc']}, {entry['name']}.")
+#                print(f"Rejected: {entry['upc']}, {entry['name']}.")
                 kill_count += 1
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
     ### Update metadata after OFF update
@@ -188,6 +188,7 @@ if u_update_required:
         (uhtt_current_date, uhtt_current_release, uhtt_current_version_url, d.today(), 'uhtt')
         )
     db_conn.close()
+    subprocess.run(["rm", "-f", "uhtt_barcode_ref_all.csv"])
 
 
 ## GET INFO ABOUT OPENFOODFACTS DATA
