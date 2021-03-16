@@ -110,11 +110,8 @@ def upsert_uhtt_entry(entry):
         UPDATE SET
         source_item_id = EXCLUDED.source_item_id,
         name = EXCLUDED.name,
-        category = EXCLUDED.category,
         db_entry_date = EXCLUDED.db_entry_date,
-        source_item_submission_date = EXCLUDED.source_item_submission_date,
         source_item_publication_date = EXCLUDED.source_item_publication_date,
-        serving_size_fulltext = EXCLUDED.serving_size_fulltext
         WHERE
         EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
         """,
@@ -150,7 +147,7 @@ if u_update_required:
         u_row_count = sum(1 for lin in u_file)
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
         u_start_time = dt.now()
-        u_dict = csv.DictReader(u_file, delimiter='\t')
+        u_dict = csv.DictReader(u_file, delimiter='\t', quoting=csv.QUOTE_NONE)
         # chz = 25
         for row in u_dict:
             # chz -= 1
