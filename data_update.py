@@ -111,7 +111,7 @@ def upsert_uhtt_entry(entry):
         source_item_id = EXCLUDED.source_item_id,
         name = EXCLUDED.name,
         db_entry_date = EXCLUDED.db_entry_date,
-        source_item_publication_date = EXCLUDED.source_item_publication_date,
+        source_item_publication_date = EXCLUDED.source_item_publication_date
         WHERE
         EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
         """,
