@@ -167,7 +167,7 @@ if u_update_required:
                 upsert_uhtt_entry(entry)
                 if not count % 1000:
                     current_time = dt.now()
-                    print(f"Completed {count} out of {u_row_count} rows, rejecting {killcount}, {current_time - u_start_time} elapsed.")
+                    print(f"Completed {count} out of {u_row_count} rows, rejecting {kill_count}, {current_time - u_start_time} elapsed.")
             else:
                 print(f"Rejected: {entry['upc']}, {entry['name']}.")
                 kill_count += 1
