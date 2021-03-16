@@ -94,6 +94,24 @@ try:
 except requests.exceptions.RequestException as e:
     print("UHTT update check failed.", e)
 
+def uhtt_store_update_check():
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute("""
+        UPDATE dataset_source_meta
+        SET current_version_date = %s,
+        current_version_release_name = %s,
+        current_version_url = %s,
+        last_update_check = %s
+        WHERE
+        source_name = %s;
+        """,
+        (uhtt_current_date, uhtt_current_release, uhtt_current_version_url, d.today(), 'uhtt')
+        )
+    db_conn.close()
+    subprocess.run(["rm", "-f", "uhtt_barcode_ref_all.csv"])
+
 def upsert_uhtt_entry(entry):
     db_fields = ['source', 'source_item_id', 'upc', 'name', 'db_entry_date', 'source_item_publication_date']
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
@@ -129,7 +147,10 @@ if not uhtt_current_date or d.fromisoformat(u_r[0]['published_at'].split('T')[0]
         if i['browser_download_url'].endswith('.7z'):
             uhtt_current_version_url = i['browser_download_url']
             u_update_required = True
-if u_update_required:
+if not u_update_required:
+    print("UHTT-sourced entries are up to date.")
+    uhtt_store_update_check()
+else:
     sp_u_start = dt.now()
     u_sp = subprocess.run("./get_UHTT_update.sh")
     if u_sp.returncode == 0:
@@ -178,26 +199,7 @@ if u_update_required:
                 duration = td(seconds=(current_time - u_start_time).seconds)
                 print(f"Processed {count} out of {u_row_count} rows, rejecting {kill_count} sparse entries and {nonfood_count} non-food entries in {duration}.")
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
-else:
-    print("UHTT-sourced entries are up to date.")
-    ### Update metadata after OFF update
-    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-    db_conn.autocommit = True
-    with db_conn.cursor() as db_cur:
-        db_cur.execute("""
-        UPDATE dataset_source_meta
-        SET current_version_date = %s,
-        current_version_release_name = %s,
-        current_version_url = %s,
-        last_update_check = %s
-        WHERE
-        source_name = %s;
-        """,
-        (uhtt_current_date, uhtt_current_release, uhtt_current_version_url, d.today(), 'uhtt')
-        )
-    db_conn.close()
-    subprocess.run(["rm", "-f", "uhtt_barcode_ref_all.csv"])
-
+        uhtt_store_update_check()
 
 ## GET INFO ABOUT OPENFOODFACTS DATA
 def is_hexadecimal(string):
