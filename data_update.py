@@ -168,6 +168,22 @@ if u_update_required:
                 entry['source_item_publication_date'] = uhtt_current_date
                 upsert_uhtt_entry(entry)
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
+    ### Update metadata after OFF update
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute("""
+        UPDATE dataset_source_meta
+        SET current_version_date = %s,
+        current_version_release_name = %s,
+        current_version_url = %s,
+        last_update_check = %s
+        WHERE
+        source_name = %s;
+        """,
+        (uhtt_current_date, uhtt_current_release, uhtt_current_version_url, d.today(), 'uhtt')
+        )
+    db_conn.close()
 
 
 ## GET INFO ABOUT OPENFOODFACTS DATA
