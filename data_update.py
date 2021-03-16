@@ -121,7 +121,7 @@ def upsert_uhtt_entry(entry):
     db_conn.close()
 
 u_update_required = False
-if not uhtt_current_date or d.fromisoformat(u_r[0]['published_at'].split('T')[0]) > d.fromisoformat(uhtt_current_date):
+if not uhtt_current_date or d.fromisoformat(u_r[0]['published_at'].split('T')[0]) > uhtt_current_date:
     uhtt_current_date = d.fromisoformat(u_r[0]['published_at'].split('T')[0])
     uhtt_current_release = u_r[0]['tag_name']
     uhtt_last_check_date = d.today()
