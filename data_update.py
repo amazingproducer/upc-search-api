@@ -137,9 +137,6 @@ if u_update_required:
     else:
         print(f"UHTT Data Update Failed (exit code {u_sp.returncode}).")
     print(f"Elapsed time: {dt.now() - sp_u_start}")
-else:
-    print("UHTT-sourced entries are up to date.")
-
     ### Process Acquired Source
     u_row_count = 0
     count = 0
@@ -181,6 +178,8 @@ else:
                 duration = td(seconds=(current_time - u_start_time).seconds)
                 print(f"Processed {count} out of {u_row_count} rows, rejecting {kill_count} sparse entries and {nonfood_count} non-food entries in {duration}.")
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
+else:
+    print("UHTT-sourced entries are up to date.")
     ### Update metadata after OFF update
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
     db_conn.autocommit = True
