@@ -144,6 +144,7 @@ if u_update_required:
     ### Process Acquired Source
     u_row_count = 0
     count = 0
+    kill_count = 0
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
         u_row_count = sum(1 for lin in u_file)
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
@@ -155,9 +156,6 @@ if u_update_required:
             # if chz < 1:
             #     break
             count += 1
-            if not count % 1000:
-                current_time = dt.now()
-                print(f"Completed {count} out of {u_row_count} rows, {current_time - u_start_time} elapsed.")
             entry = {}
             entry['upc'] = validate_upc(row['UPCEAN'])
             entry['name'] = row['Name']
@@ -167,6 +165,12 @@ if u_update_required:
                 entry['db_entry_date'] = d.today()
                 entry['source_item_publication_date'] = uhtt_current_date
                 upsert_uhtt_entry(entry)
+                if not count % 1000:
+                    current_time = dt.now()
+                    print(f"Completed {count} out of {u_row_count} rows, rejecting {killcount}, {current_time - u_start_time} elapsed.")
+            else:
+                print(f"Rejected: {entry['upc']}, {entry['name']}.")
+                kill_count += 1
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
     ### Update metadata after OFF update
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
