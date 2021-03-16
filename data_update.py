@@ -161,14 +161,15 @@ if u_update_required:
             entry['upc'] = validate_upc(row['UPCEAN'])
             entry['name'] = row['Name']
             if "CategoryName" in row.keys():
-                if entry['upc'] and entry['name'] and "Продукты питания" in row['CategoryName']:
-                    entry['source'] = 'uhtt'
-                    entry['source_item_id'] = row['ID']
-                    entry['db_entry_date'] = d.today()
-                    entry['source_item_publication_date'] = uhtt_current_date
-                    upsert_uhtt_entry(entry)
-                else:
-                    kill_count += 1
+                if row['CategoryName']:
+                    if entry['upc'] and entry['name'] and "Продукты питания" in row['CategoryName']:
+                        entry['source'] = 'uhtt'
+                        entry['source_item_id'] = row['ID']
+                        entry['db_entry_date'] = d.today()
+                        entry['source_item_publication_date'] = uhtt_current_date
+                        upsert_uhtt_entry(entry)
+                    else:
+                        kill_count += 1
             else:
                 nonfood_count += 1
             if not count % 1000:
