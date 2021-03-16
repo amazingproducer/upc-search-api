@@ -162,7 +162,7 @@ if u_update_required:
             entry['name'] = row['Name']
             if "CategoryName" in row.keys():
                 if row['CategoryName']:
-                    if "Продукты питания" in row['CategoryName']
+                    if "Продукты питания" in row['CategoryName']:
                         if entry['upc'] and entry['name']:
                             entry['source'] = 'uhtt'
                             entry['source_item_id'] = row['ID']
