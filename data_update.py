@@ -174,7 +174,7 @@ if u_update_required:
                 nonfood_count += 1
             if not count % 1000:
                 current_time = dt.now()
-                duration = (u_start_time - current_time).seconds
+                duration = dt(seconds=(current_time - u_start_time).seconds)
                 print(f"Processed {count} out of {u_row_count} rows, rejecting {kill_count} sparse entries and {nonfood_count} non-food entries in {duration}.")
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
     ### Update metadata after OFF update
