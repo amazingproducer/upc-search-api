@@ -94,6 +94,9 @@ try:
 except requests.exceptions.RequestException as e:
     print("UHTT update check failed.", e)
 
+def upsert_uhtt_entry(entry):
+    print(entry)
+
 u_update_required = False
 if not uhtt_current_date or d.fromisoformat(u_r[0]['published_at'].split('T')[0]) > d.fromisoformat(uhtt_current_date):
     uhtt_current_date = d.fromisoformat(u_r[0]['published_at'].split('T')[0])
@@ -112,16 +115,25 @@ if u_update_required:
         print(f"UHTT Data Update Failed (exit code {u_sp.returncode}).")
     print(f"Elapsed time: {dt.now() - sp_u_start}")
 
-### Process Acquired Source
-with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
-    u_dict = csv.DictReader(u_file, delimiter='\t')
-    chz = 25
-    for row in u_dict:
+    ### Process Acquired Source
+    u_row_count = 0
+    with open('uhtt_barcode_ref_all.csv', 'r') as u_file: # find a be
+        u_dict = csv.DictReader(u_file, delimiter='\t')
+            for row in u_dict:
+                u_row_count += 1
+    with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
+        u_start_time = dt.now()
+        u_dict = csv.DictReader(u_file, delimiter='\t')
+        chz = 25
+        for row in u_dict:
             chz -= 1
             if chz < 1:
                 break
-            print(row['UPCEAN'], row['Name'], row['BrandName'])
-
+            entry = {}
+            entry['u_upc'] = validate_upc(row['UPCEAN'])
+            entry['u_name'] = row['Name']
+            if u_upc and u_name:
+                upsert_uhtt_entry(entry)
 
 
 ## GET INFO ABOUT OPENFOODFACTS DATA
@@ -347,7 +359,6 @@ for i in USDAIndexParser.dataset_list:
     if usda_latest_date == None or date_object > usda_latest_date:
         usda_latest_date = date_object
         usda_latest_url = usda_dataset_index_url + i
-        print(f"Latest URL: {usda_latest_url}")
 
 if usda_current_version_date == None or usda_latest_date > usda_current_version_date:
     print("USDA dataset update available.")
