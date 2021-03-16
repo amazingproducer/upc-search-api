@@ -130,7 +130,7 @@ if u_update_required:
             entry = {}
             entry['u_upc'] = validate_upc(row['UPCEAN'])
             entry['u_name'] = row['Name']
-            if u_upc and u_name:
+            if entry['u_upc'] and entry['u_name']:
                 upsert_uhtt_entry(entry)
 
 
