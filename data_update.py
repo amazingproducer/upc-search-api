@@ -101,7 +101,7 @@ def upsert_uhtt_entry(entry):
     with db_conn.cursor() as db_cur:
         db_cur.execute(f"""
         INSERT INTO
-        product_info ({db_fields})
+        product_info ({', '.join(db_fields)})
         VALUES
         (%s, %s, %s, %s, %s, %s)
         ON CONFLICT ON CONSTRAINT
