@@ -166,13 +166,13 @@ if u_update_required:
                     entry['db_entry_date'] = d.today()
                     entry['source_item_publication_date'] = uhtt_current_date
                     upsert_uhtt_entry(entry)
-                    if not count % 1000:
-                        current_time = dt.now()
-                        print(f"Completed {count} out of {u_row_count} rows, rejecting {kill_count}, {current_time - u_start_time} elapsed.")
                 else:
                     kill_count += 1
             else:
                 kill_count += 1
+            if not count % 1000:
+                current_time = dt.now()
+                print(f"Processed {count} out of {u_row_count} rows, rejecting {kill_count}, {current_time - u_start_time} elapsed.")
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
     ### Update metadata after OFF update
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
