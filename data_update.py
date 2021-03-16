@@ -119,8 +119,8 @@ if u_update_required:
     u_row_count = 0
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file: # find a be
         u_dict = csv.DictReader(u_file, delimiter='\t')
-            for row in u_dict:
-                u_row_count += 1
+        for row in u_dict:
+            u_row_count += 1
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
         u_start_time = dt.now()
         u_dict = csv.DictReader(u_file, delimiter='\t')
