@@ -31,6 +31,8 @@ CREATE TABLE product_info
     CONSTRAINT check_unique_composite UNIQUE (upc, source)
 );
 
+CREATE INDEX idx_upc ON product_info (upc);
+
 INSERT INTO dataset_source_meta (source_name, refresh_check_url, current_version_url) VALUES 
 (
     'off', 'https://static.openfoodfacts.org/data/sha256sum', 'https://static.openfoodfacts.org/data/openfoodfacts-mongodbdump.tar.gz'
