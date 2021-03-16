@@ -159,7 +159,7 @@ if u_update_required:
             entry = {}
             entry['upc'] = validate_upc(row['UPCEAN'])
             entry['name'] = row['Name']
-            if entry['upc'] and entry['name']:
+            if entry['upc'] and entry['name'] and "Продукты питания" in entry['CategoryName']:
                 entry['source'] = 'uhtt'
                 entry['source_item_id'] = row['ID']
                 entry['db_entry_date'] = d.today()
