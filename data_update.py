@@ -160,7 +160,7 @@ if u_update_required:
             entry['upc'] = validate_upc(row['UPCEAN'])
             entry['name'] = row['Name']
             if "CategoryName" in row.keys():
-                if entry['upc'] and entry['name'] and "Продукты питания" in entry['CategoryName']:
+                if entry['upc'] and entry['name'] and "Продукты питания" in row['CategoryName']:
                     entry['source'] = 'uhtt'
                     entry['source_item_id'] = row['ID']
                     entry['db_entry_date'] = d.today()
@@ -170,8 +170,9 @@ if u_update_required:
                         current_time = dt.now()
                         print(f"Completed {count} out of {u_row_count} rows, rejecting {kill_count}, {current_time - u_start_time} elapsed.")
                 else:
-    #                print(f"Rejected: {entry['upc']}, {entry['name']}.")
                     kill_count += 1
+            else:
+                kill_count += 1
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
     ### Update metadata after OFF update
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
