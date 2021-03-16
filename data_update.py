@@ -128,9 +128,13 @@ if u_update_required:
             if chz < 1:
                 break
             entry = {}
-            entry['u_upc'] = validate_upc(row['UPCEAN'])
-            entry['u_name'] = row['Name']
-            if entry['u_upc'] and entry['u_name']:
+            entry['upc'] = validate_upc(row['UPCEAN'])
+            entry['name'] = row['Name']
+            if entry['upc'] and entry['name']:
+                entry['source'] = 'uhtt'
+                entry['source_item_id'] = row['ID']
+                entry['db_entry_date'] = d.today()
+                entry['source_item_publication_date'] = uhtt_current_date
                 upsert_uhtt_entry(entry)
 
 
