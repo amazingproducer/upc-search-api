@@ -95,7 +95,33 @@ except requests.exceptions.RequestException as e:
     print("UHTT update check failed.", e)
 
 def upsert_uhtt_entry(entry):
-    print(entry)
+    db_fields = ['source', 'source_item_id', 'upc', 'name', 'db_entry_date', 'source_item_publication_date']
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute(f"""
+        INSERT INTO
+        product_info ({db_fields})
+        VALUES
+        (%s, %s, %s, %s, %s, %s)
+        ON CONFLICT ON CONSTRAINT
+        check_unique_composite
+        DO
+        UPDATE SET
+        source_item_id = EXCLUDED.source_item_id,
+        name = EXCLUDED.name,
+        category = EXCLUDED.category,
+        db_entry_date = EXCLUDED.db_entry_date,
+        source_item_submission_date = EXCLUDED.source_item_submission_date,
+        source_item_publication_date = EXCLUDED.source_item_publication_date,
+        serving_size_fulltext = EXCLUDED.serving_size_fulltext
+        WHERE
+        EXCLUDED.source_item_publication_date > product_info.source_item_publication_date;
+        """,
+        (entry['source'], entry['source_item_id'], entry['upc'], entry['name'], entry['db_entry_date'], entry['source_item_publication_date'])
+        )
+#        print(db_cur.query.decode('utf-8'))
+    db_conn.close()
 
 u_update_required = False
 if not uhtt_current_date or d.fromisoformat(u_r[0]['published_at'].split('T')[0]) > d.fromisoformat(uhtt_current_date):
@@ -117,16 +143,21 @@ if u_update_required:
 
     ### Process Acquired Source
     u_row_count = 0
+    count = 0
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
         u_row_count = sum(1 for lin in u_file)
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
         u_start_time = dt.now()
         u_dict = csv.DictReader(u_file, delimiter='\t')
-        chz = 25
+        # chz = 25
         for row in u_dict:
-            chz -= 1
-            if chz < 1:
-                break
+            # chz -= 1
+            # if chz < 1:
+            #     break
+            count += 1
+            if not count % 1000:
+                current_time = dt.now()
+                print(f"Completed {count} out of {u_row_count} rows, {current_time - u_start_time} elapsed.")
             entry = {}
             entry['upc'] = validate_upc(row['UPCEAN'])
             entry['name'] = row['Name']
@@ -136,6 +167,7 @@ if u_update_required:
                 entry['db_entry_date'] = d.today()
                 entry['source_item_publication_date'] = uhtt_current_date
                 upsert_uhtt_entry(entry)
+        print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
 
 
 ## GET INFO ABOUT OPENFOODFACTS DATA
