@@ -137,6 +137,8 @@ if u_update_required:
     else:
         print(f"UHTT Data Update Failed (exit code {u_sp.returncode}).")
     print(f"Elapsed time: {dt.now() - sp_u_start}")
+else:
+    print("UHTT-sourced entries are up to date.")
 
     ### Process Acquired Source
     u_row_count = 0
@@ -251,7 +253,8 @@ if off_update_hash and off_update_required:
         else:
             print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
         print(f"Elapsed time: {dt.now() - sp_off_start}")
-
+elif not off_update_required:
+    print("OpenFoodFacts-sourced entries are up to date.")
 
 
 ### Upsert OpenFoodFacts entries
@@ -433,7 +436,8 @@ if usda_update_required:
         print("USDA Data Update Acquired.")
     else:
         print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
-
+else:
+    print("UHTT-sourced entries are up to date.")
 ### process acquired USDA files
 if usda_update_required:
     food_names = []
