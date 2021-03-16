@@ -174,8 +174,8 @@ if u_update_required:
                 nonfood_count += 1
             if not count % 1000:
                 current_time = dt.now()
-                duration = (u_start_time - current_time).total_seconds()
-                print(f"Processed {count} out of {u_row_count} rows, rejecting {kill_count} sparse entries and {nonfood_count} non-food entries in {duration//3600}h{(duration//3600)%60}m.")
+                duration = td(seconds = (u_start_time - current_time))
+                print(f"Processed {count} out of {u_row_count} rows, rejecting {kill_count} sparse entries and {nonfood_count} non-food entries in {duration}.")
         print(f"UHTT upsert complete. Total Time Elapsed: {dt.now() - u_start_time}")
     ### Update metadata after OFF update
     db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
