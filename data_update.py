@@ -168,11 +168,11 @@ else:
     with open('uhtt_barcode_ref_all.csv', 'r') as u_file:
         u_start_time = dt.now()
         u_dict = csv.DictReader(u_file, delimiter='\t', quoting=csv.QUOTE_NONE)
-        # chz = 25
+        chz = 250
         for row in u_dict:
-            # chz -= 1
-            # if chz < 1:
-            #     break
+            chz -= 1
+            if chz < 1:
+                break
             count += 1
             entry = {}
             entry['upc'] = validate_upc(row['UPCEAN'])
@@ -303,6 +303,7 @@ db_mapping = {'source':'off', 'source_item_id':'_id', 'upc':'code', 'name':'prod
 ### process and upsert OpenFoodfacts data
 if off_update_required == True:
     start_time = dt.now()
+    chz = 250
     for m_d in m_dataset:
         count += 1
         m_entry = {}
@@ -369,6 +370,9 @@ if off_update_required == True:
         if kill_flag:
             kill_count += 1
         else:
+            chz -= 1
+            if chz < 1:
+                break
             for db_field in db_fields:
                 if db_field not in entry.keys():
                     entry[db_field] = m_entry[db_mapping[db_field]]
@@ -472,6 +476,7 @@ if usda_update_required:
     with open('branded_food.csv', 'r') as bf_file:
         bf = csv.DictReader(bf_file)
         count = 0
+        chz = 250
         start_time = dt.now()
         for row in bf:
             f_id = row["fdc_id"]
@@ -485,6 +490,9 @@ if usda_update_required:
                 current_time = dt.now()
                 print(f"Completed {count} out of {row_count} rows, {current_time - start_time} elapsed.")
             if f_upc:
+                chz -= 1
+                if chz < 1:
+                    break
                 for entry in food_names:
                     if entry["fdc_id"] == f_id:
                         f_pn = entry["product_name"]
