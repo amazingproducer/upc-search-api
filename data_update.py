@@ -66,13 +66,10 @@ def validate_upc(code):
     if not code:
         return None
     if p_GTIN.search(str(code)):
-        print("GTIN found")
         u_match = p_GTIN.search(str(code)).group()
     elif p_EAN.search(str(code)):
-        print("EAN found")
         u_match = p_EAN.search(str(code)).group()
     elif p_UPC.search(str(code)):
-        print("UPC found")
         u_match = p_UPC.search(str(code)).group()
     else:
         return None
