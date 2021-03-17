@@ -58,22 +58,30 @@ db_conn.close()
 
 
 def validate_upc(code):
-    p_EAN = re.compile('\d{14}$')
+    p_GTIN = re.compile('\d{14}$')
+    p_EAN = re.compile('\d{13}$')
     p_UPC = re.compile('\d{12}$')
     if code == None:
         return None
     if not code:
         return None
-    if p_EAN.search(str(code)):
+    if p_GTIN.search(str(code)):
+        print("GTIN found")
+        u_match = p_GTIN.search(str(code)).group()
+    elif p_EAN.search(str(code)):
+        print("EAN found")
         u_match = p_EAN.search(str(code)).group()
     elif p_UPC.search(str(code)):
+        print("UPC found")
         u_match = p_UPC.search(str(code)).group()
     else:
         return None
     if len(str(int(str(code)))) < 11:
         return None
-    if p_UPC.match(u_match):
+    if p_EAN.match(u_match):
         u_match = "0"+u_match
+    elif p_UPC.match(u_match):
+        u_match = "00"+u_match
     return u_match
 
 
