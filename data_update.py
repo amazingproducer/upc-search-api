@@ -235,8 +235,12 @@ for i in ds_meta:
 if not off_last_check_date:
 #    print('OFF update_required')
     off_update_required = True
-update_age = d.today() - off_current_version_date
-if update_age.days > update_interval.days:
+if off_current_version_date:
+    update_age = d.today() - off_current_version_date
+    if update_age.days > update_interval.days:
+        off_update_required = True
+        print("OFF update required")
+else:
     off_update_required = True
     print("OFF update required")
 if off_update_required:
