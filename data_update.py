@@ -323,12 +323,12 @@ if off_update_required == True:
         elif not m_entry['product_name']:
     #        print("Product name absent")
             kill_flag = True
-        if validate_upc(m_entry['code']) == None:
-    #        print("UPC failure")
-            kill_flag = True
-        else:
-            m_entry['code'] = validate_upc(m_entry['code'])
-            entry['upc'] = validate_upc(m_entry['code'])
+        if 'code' in m_entry.keys():
+            if validate_upc(m_entry['code']) == None:
+        #        print("UPC failure")
+                kill_flag = True
+            else:
+                entry['upc'] = validate_upc(m_entry['code'])
         if "categories_tags" in m_entry.keys():
             if m_entry['categories_tags'] == None:
                 entry['category'] = m_entry['categories_tags']
