@@ -233,23 +233,23 @@ for i in ds_meta:
 # print(f"Updated in last 30 days: {(d.today() - off_current_version_date) > (update_interval).days}")
 
 if not off_last_check_date:
-    print('OFF update_required')
+#    print('OFF update_required')
     off_update_required = True
-else:
-    update_age = d.today() - off_current_version_date
-    if update_age.days > update_interval.days:
-        off_update_required = True
-        print("OFF update required")
-        try:
-            r = requests.get(off_update_hash_url)
-            off_update_hash = r.text.split(" ")[0]
-            if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
-                print("Retrieved OFF update checksum is not a SHA-256 hash.")
-                off_update_hash = None
-            print("OFF update checksum retrieval succeeded.")
-        except requests.exceptions.RequestException as e:
-            print("OFF update checksum retrieval failed.", e)
+update_age = d.today() - off_current_version_date
+if update_age.days > update_interval.days:
+    off_update_required = True
+    print("OFF update required")
+if off_update_required:
+    try:
+        r = requests.get(off_update_hash_url)
+        off_update_hash = r.text.split(" ")[0]
+        if len(off_update_hash) != 64 or not is_hexadecimal(off_update_hash):
+            print("Retrieved OFF update checksum is not a SHA-256 hash.")
             off_update_hash = None
+        print("OFF update checksum retrieval succeeded.")
+    except requests.exceptions.RequestException as e:
+        print("OFF update checksum retrieval failed.", e)
+        off_update_hash = None
 if off_update_hash and off_update_required:
     if not off_current_hash or off_current_hash != off_update_hash:
         sp_off_start = dt.now()
