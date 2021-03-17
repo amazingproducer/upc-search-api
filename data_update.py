@@ -58,7 +58,7 @@ db_conn.close()
 
 
 def validate_upc(code):
-    p_EAN = re.compile('\d{13}$')
+    p_EAN = re.compile('\d{14}$')
     p_UPC = re.compile('\d{12}$')
     if code == None:
         return None
