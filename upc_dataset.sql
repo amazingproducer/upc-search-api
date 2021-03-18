@@ -32,6 +32,7 @@ CREATE TABLE product_info
 );
 
 CREATE INDEX idx_upc ON product_info (upc);
+CREATE INDEX idx_name_by_upc ON product_info (upc, name);
 CREATE INDEX idx_product_info ON product_info (source, upc, source_item_publication_date);
 
 INSERT INTO dataset_source_meta (source_name, refresh_check_url, current_version_url) VALUES 

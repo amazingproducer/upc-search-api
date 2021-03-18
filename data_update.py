@@ -82,6 +82,22 @@ def validate_upc(code):
     return u_match
 
 
+def usda_store_update_check():
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute("""
+        UPDATE dataset_source_meta
+        SET current_version_date = %s,
+        current_version_url = %s,
+        last_update_check = %s
+        WHERE
+        source_name = %s;
+        """,
+        (usda_latest_date, usda_latest_url, d.today(), 'usda')
+        )
+    db_conn.close()
+
 ## GET INFO ABOUT UHTT DATA
 uhtt_current_release = None
 uhtt_current_date = None
@@ -548,22 +564,9 @@ if usda_update_required:
         print(f"Elapsed time: {end_time - start_time}")
     db_conn.close()
     subprocess.run("./cleanup_USDA_update.sh")
-
-    ### Update metadata after USDA update
-    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-    db_conn.autocommit = True
-    with db_conn.cursor() as db_cur:
-        db_cur.execute("""
-        UPDATE dataset_source_meta
-        SET current_version_date = %s,
-        current_version_url = %s,
-        last_update_check = %s
-        WHERE
-        source_name = %s;
-        """,
-        (usda_latest_date, usda_latest_url, d.today(), 'usda')
-        )
-    db_conn.close()
+    usda_store_update_check()
+else:
+    usda_store_update_check()
 
 
     ## save the joined data to a csv in case we want it
