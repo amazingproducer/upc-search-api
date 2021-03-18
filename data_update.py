@@ -568,10 +568,3 @@ if usda_update_required:
 else:
     usda_store_update_check()
 
-
-    ## save the joined data to a csv in case we want it
-    with open('newfile.csv', 'w') as newfile:
-        nd_w = csv.DictWriter(newfile, fieldnames=fieldnames)
-        nd_w.writeheader()
-        nd_w.writerows(food_data)
-
