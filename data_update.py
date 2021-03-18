@@ -128,7 +128,7 @@ def off_store_update_check():
         WHERE
         source_name = %s;
         """,
-        (d.today(), off_update_hash, d.today(), 'off')
+        (off_current_version_date, off_update_hash, d.today(), 'off')
         )
     db_conn.close()
 
@@ -154,7 +154,7 @@ def upsert_uhtt_entry(entry):
     db_conn.autocommit = True
     with db_conn.cursor() as db_cur:
         db_cur.execute(f"""
-        INSERT INTO
+        INSERT INTOoff_current_version_date
         product_info ({', '.join(db_fields)})
         VALUES
         (%s, %s, %s, %s, %s, %s)
@@ -418,6 +418,7 @@ if off_update_required == True:
                     entry[db_field] = m_entry[db_mapping[db_field]]
     #        print(entry)
             upsert_off_entry(entry)
+    off_current_version_date = d.today()
     off_store_update_check()
 else:
     off_store_update_check()
