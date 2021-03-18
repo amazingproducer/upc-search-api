@@ -295,6 +295,7 @@ if off_update_hash and off_update_required:
             print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
         print(f"Elapsed time: {dt.now() - sp_off_start}")
 elif not off_update_required:
+    off_update_hash = off_current_hash
     print("OpenFoodFacts-sourced entries are up to date.")
 
 
