@@ -81,23 +81,6 @@ def validate_upc(code):
         u_match = "00"+u_match
     return u_match
 
-
-def usda_store_update_check():
-    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-    db_conn.autocommit = True
-    with db_conn.cursor() as db_cur:
-        db_cur.execute("""
-        UPDATE dataset_source_meta
-        SET current_version_date = %s,
-        current_version_url = %s,
-        last_update_check = %s
-        WHERE
-        source_name = %s;
-        """,
-        (usda_latest_date, usda_latest_url, d.today(), 'usda')
-        )
-    db_conn.close()
-
 ## GET INFO ABOUT UHTT DATA
 uhtt_current_release = None
 uhtt_current_date = None
@@ -132,6 +115,38 @@ def uhtt_store_update_check():
         )
     db_conn.close()
     subprocess.run(["rm", "-f", "uhtt_barcode_ref_all.csv"])
+
+def off_store_update_check():
+db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+db_conn.autocommit = True
+with db_conn.cursor() as db_cur:
+    db_cur.execute("""
+    UPDATE dataset_source_meta
+    SET current_version_date = %s,
+    current_version_hash = %s,
+    last_update_check = %s
+    WHERE
+    source_name = %s;
+    """,
+    (d.today(), off_update_hash, d.today(), 'off')
+    )
+db_conn.close()
+
+def usda_store_update_check():
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute("""
+        UPDATE dataset_source_meta
+        SET current_version_date = %s,
+        current_version_url = %s,
+        last_update_check = %s
+        WHERE
+        source_name = %s;
+        """,
+        (usda_latest_date, usda_latest_url, d.today(), 'usda')
+        )
+    db_conn.close()
 
 def upsert_uhtt_entry(entry):
     db_fields = ['source', 'source_item_id', 'upc', 'name', 'db_entry_date', 'source_item_publication_date']
@@ -403,23 +418,9 @@ if off_update_required == True:
                     entry[db_field] = m_entry[db_mapping[db_field]]
     #        print(entry)
             upsert_off_entry(entry)
-
-
-### Update metadata after OFF update
-db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-db_conn.autocommit = True
-with db_conn.cursor() as db_cur:
-    db_cur.execute("""
-    UPDATE dataset_source_meta
-    SET current_version_date = %s,
-    current_version_hash = %s,
-    last_update_check = %s
-    WHERE
-    source_name = %s;
-    """,
-    (d.today(), off_update_hash, d.today(), 'off')
-    )
-db_conn.close()
+    off_store_update_check()
+else:
+    off_store_update_check()
 
 # GET INFO ABOUT USDA DATA:
 ## Check datasource meta table for USDA data attributes
