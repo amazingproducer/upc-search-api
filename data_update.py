@@ -469,7 +469,7 @@ if usda_update_required:
     else:
         print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
 else:
-    print("UHTT-sourced entries are up to date.")
+    print("USDA-sourced entries are up to date.")
 ### process acquired USDA files
 if usda_update_required:
     food_names = []
