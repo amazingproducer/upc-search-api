@@ -154,7 +154,7 @@ def upsert_uhtt_entry(entry):
     db_conn.autocommit = True
     with db_conn.cursor() as db_cur:
         db_cur.execute(f"""
-        INSERT INTOoff_current_version_date
+        INSERT INTO
         product_info ({', '.join(db_fields)})
         VALUES
         (%s, %s, %s, %s, %s, %s)
