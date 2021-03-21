@@ -81,7 +81,6 @@ def validate_upc(code):
         u_match = "00"+u_match
     return u_match
 
-
 ## GET INFO ABOUT UHTT DATA
 uhtt_current_release = None
 uhtt_current_date = None
@@ -116,6 +115,38 @@ def uhtt_store_update_check():
         )
     db_conn.close()
     subprocess.run(["rm", "-f", "uhtt_barcode_ref_all.csv"])
+
+def off_store_update_check():
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute("""
+        UPDATE dataset_source_meta
+        SET current_version_date = %s,
+        current_version_hash = %s,
+        last_update_check = %s
+        WHERE
+        source_name = %s;
+        """,
+        (off_current_version_date, off_update_hash, d.today(), 'off')
+        )
+    db_conn.close()
+
+def usda_store_update_check():
+    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
+    db_conn.autocommit = True
+    with db_conn.cursor() as db_cur:
+        db_cur.execute("""
+        UPDATE dataset_source_meta
+        SET current_version_date = %s,
+        current_version_url = %s,
+        last_update_check = %s
+        WHERE
+        source_name = %s;
+        """,
+        (usda_latest_date, usda_latest_url, d.today(), 'usda')
+        )
+    db_conn.close()
 
 def upsert_uhtt_entry(entry):
     db_fields = ['source', 'source_item_id', 'upc', 'name', 'db_entry_date', 'source_item_publication_date']
@@ -264,6 +295,7 @@ if off_update_hash and off_update_required:
             print(f"OpenFoodFacts Data Update Failed (exit code {off_sp.returncode}).")
         print(f"Elapsed time: {dt.now() - sp_off_start}")
 elif not off_update_required:
+    off_update_hash = off_current_hash
     print("OpenFoodFacts-sourced entries are up to date.")
 
 
@@ -387,23 +419,10 @@ if off_update_required == True:
                     entry[db_field] = m_entry[db_mapping[db_field]]
     #        print(entry)
             upsert_off_entry(entry)
-
-
-### Update metadata after OFF update
-db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-db_conn.autocommit = True
-with db_conn.cursor() as db_cur:
-    db_cur.execute("""
-    UPDATE dataset_source_meta
-    SET current_version_date = %s,
-    current_version_hash = %s,
-    last_update_check = %s
-    WHERE
-    source_name = %s;
-    """,
-    (d.today(), off_update_hash, d.today(), 'off')
-    )
-db_conn.close()
+    off_current_version_date = d.today()
+    off_store_update_check()
+else:
+    off_store_update_check()
 
 # GET INFO ABOUT USDA DATA:
 ## Check datasource meta table for USDA data attributes
@@ -451,7 +470,7 @@ if usda_update_required:
     else:
         print(f"USDA Data Update Failed (exit code {usda_sp.returncode}).")
 else:
-    print("UHTT-sourced entries are up to date.")
+    print("USDA-sourced entries are up to date.")
 ### process acquired USDA files
 if usda_update_required:
     food_names = []
@@ -548,27 +567,7 @@ if usda_update_required:
         print(f"Elapsed time: {end_time - start_time}")
     db_conn.close()
     subprocess.run("./cleanup_USDA_update.sh")
-
-    ### Update metadata after USDA update
-    db_conn = psycopg2.connect(user='barcodeserver', host='10.8.0.55', password=upc_DATABASE_KEY, dbname='upc_data')
-    db_conn.autocommit = True
-    with db_conn.cursor() as db_cur:
-        db_cur.execute("""
-        UPDATE dataset_source_meta
-        SET current_version_date = %s,
-        current_version_url = %s,
-        last_update_check = %s
-        WHERE
-        source_name = %s;
-        """,
-        (usda_latest_date, usda_latest_url, d.today(), 'usda')
-        )
-    db_conn.close()
-
-
-    ## save the joined data to a csv in case we want it
-    with open('newfile.csv', 'w') as newfile:
-        nd_w = csv.DictWriter(newfile, fieldnames=fieldnames)
-        nd_w.writeheader()
-        nd_w.writerows(food_data)
+    usda_store_update_check()
+else:
+    usda_store_update_check()
 
