@@ -7,7 +7,7 @@ from os import getenv
 
 upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 
-DB_URL = f"postgresql://barcodeserver:{upc_DATABASE_KEY}@tengu.i.shamacon.us/upc_data"
+DB_URL = f"postgresql://barcodeserver:{upc_DATABASE_KEY}@10.8.0.55/upc_data"
 
 database = databases.Database(DB_URL)
 
@@ -53,7 +53,8 @@ class ProductInfo(Base):
 engine = create_engine(DB_URL)
 
 
-api = FastAPI()
+#api = FastAPI(root_path="/api/v2")
+api = FastAPI(openapi_url="/api/v2/openapi.json", docs_url="/api/v2/docs")
 
 @api.on_event("startup")
 async def db_connect():
@@ -63,13 +64,13 @@ async def db_connect():
 async def db_disconnect():
     await database.disconnect()
 
-@api.get('/')
+@api.get('/api/v2/', include_in_schema = False)
 async def root():
-    response = RedirectResponse(url='/docs')
+    response = RedirectResponse(url='/api/v2/docs')
     return response 
 
 
-@api.get("/name/{barcode}")
+@api.get("/api/v2/name/{barcode}")
 async def get_name_by_barcode(barcode: str = Path(..., min_length= 12, max_length=14, regex=r"^\d+$")):
     results = {"UPC": None}
     if barcode:
