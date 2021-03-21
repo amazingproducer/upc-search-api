@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Path
+#!/usr/bin/env python3.9
+from fastapi import FastAPI, Path, Query
 from starlette.responses import RedirectResponse
 import databases
 from sqlalchemy import ARRAY, CheckConstraint, Column, Date, Enum, Index, Integer, Numeric, String, Text, UniqueConstraint, text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from os import getenv
-
+from typing import Optional
 upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
 
 DB_URL = f"postgresql://barcodeserver:{upc_DATABASE_KEY}@10.8.0.55/upc_data"
@@ -53,6 +54,13 @@ class ProductInfo(Base):
 engine = create_engine(DB_URL)
 
 
+class DataSource(str, Enum):
+    usda = "USDA"
+    uhtt = "UHTT"
+    off = "OpenFoodFacts"
+    null = None
+
+
 #api = FastAPI(root_path="/api/v2")
 api = FastAPI(openapi_url="/api/v2/openapi.json", docs_url="/api/v2/docs")
 
@@ -71,9 +79,13 @@ async def root():
 
 
 @api.get("/api/v2/name/{barcode}")
-async def get_name_by_barcode(barcode: str = Path(..., min_length= 12, max_length=14, regex=r"^\d+$")):
+async def get_name_by_barcode(source:DataSource=DataSource.null, barcode: str = Path(..., min_length= 12, max_length=14, regex=r"^\d+$")):
     results = {"UPC": None}
     if barcode:
         query = "SELECT name from product_info where upc = :barcode"
+        if source:
+            query = query + " and source = :source"
+            results = await database.fetch_one(query=query, values={"barcode":barcode, "source":source})
+            return results
         results = await database.fetch_all(query=query, values={"barcode":barcode})
-    return results
+        return results
