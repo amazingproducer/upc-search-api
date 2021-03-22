@@ -1,9 +1,10 @@
 #!/usr/bin/env python3.9
-from fastapi import FastAPI, Path, Query
+from fastapi import FastAPI, Path, HTTPException, Body
 from starlette.responses import RedirectResponse
 import databases
 from sqlalchemy import ARRAY, CheckConstraint, Column, Date, Enum, Index, Integer, Numeric, String, Text, UniqueConstraint, text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from enum import Enum as En
 from os import getenv
 from typing import Optional
 upc_DATABASE_KEY = getenv('upc_DATABASE_KEY')
@@ -54,15 +55,38 @@ class ProductInfo(Base):
 engine = create_engine(DB_URL)
 
 
-class DataSource(str, Enum):
-    usda = "USDA"
-    uhtt = "UHTT"
-    off = "OpenFoodFacts"
-    null = None
+class DataSource(str, En):
+    USDA = "usda"
+    UHTT = "uhtt"
+    OpenFoodFacts = "off"
 
 
-#api = FastAPI(root_path="/api/v2")
-api = FastAPI(openapi_url="/api/v2/openapi.json", docs_url="/api/v2/docs")
+api = FastAPI()
+#api = FastAPI(openapi_url="/api/v2/openapi.json", docs_url="/api/v2/docs")
+
+def expand_barcode(code):
+    q_barcode = code
+    while len(q_barcode) < 14:
+        q_barcode = "0"+q_barcode
+    return q_barcode
+
+def get_source_name(s_value):
+    for i in DataSource:
+        if i.value == s_value:
+            return i.name
+
+def mutate_result(result):
+    if isinstance(result, list):
+        lr = []
+        for i in range(len(DataSource)-1):
+            try:
+                if result[i]:
+                    lr.append(dict(result[i]))
+            except:
+                pass
+        return lr
+    else:
+        return dict(result)
 
 @api.on_event("startup")
 async def db_connect():
@@ -72,20 +96,66 @@ async def db_connect():
 async def db_disconnect():
     await database.disconnect()
 
-@api.get('/api/v2/', include_in_schema = False)
-async def root():
-    response = RedirectResponse(url='/api/v2/docs')
-    return response 
+@api.get('/', include_in_schema = False)
+def root():
+#    response = RedirectResponse(url='/api/v2/docs')
+    response = RedirectResponse(url='/docs')
+    return response
 
-
-@api.get("/api/v2/name/{barcode}")
-async def get_name_by_barcode(source:DataSource=DataSource.null, barcode: str = Path(..., min_length= 12, max_length=14, regex=r"^\d+$")):
-    results = {"UPC": None}
+@api.get("/name/{barcode}")
+async def get_name_by_barcode(source:Optional[DataSource] = None, barcode: str = Path(..., min_length= 12, max_length=14, regex=r"^\d+$")):
+    results = None
     if barcode:
-        query = "SELECT name from product_info where upc = :barcode"
+        q_barcode = expand_barcode(barcode)
+        query = "SELECT upc, name, source from product_info where upc = :barcode"
         if source:
+            print(source.value)
             query = query + " and source = :source"
-            results = await database.fetch_one(query=query, values={"barcode":barcode, "source":source})
-            return results
-        results = await database.fetch_all(query=query, values={"barcode":barcode})
-        return results
+            results = await database.fetch_one(query=query, values={"barcode":q_barcode, "source":source.value})
+            if results:
+                res = mutate_result(results)
+                res["upc"] = barcode
+                res["source"] = source.name
+                return res
+        results = await database.fetch_all(query=query, values={"barcode":q_barcode})
+        if results:
+            res = mutate_result(results)
+            for r in res:
+                r["upc"] = barcode
+                r["source"] = get_source_name(r["source"])
+            return res
+        raise HTTPException(status_code=404, detail="Entry not found.")
+
+@api.get("/grocy/{barcode}")
+async def get_grocy_data_by_barcode(barcode:str=Path(..., min_length= 12, max_length=14, regex=r"^\d+$")):
+    results = None
+    if barcode:
+        q_barcode = expand_barcode(barcode)
+        query = "SELECT * from product_info where upc = :barcode"
+        results = await database.fetch_all(query=query, values={"barcode":q_barcode})
+        if results:
+            lr = []
+            for i in range(len(DataSource)-1):
+                try:
+                    if results[i]:
+                        lr.append(dict(results[i]))
+                except:
+                    pass
+            for res in lr:
+                del res["id"]
+                del res["source_item_id"]
+                res["upc"] = barcode
+                # if len(barcode) == 14:
+                #     res["gtin-14"] = res.pop("upc")
+                # elif len(barcode) == 13:
+                #     res["ean-13"] = res.pop("upc")
+                res["product_name"] = res.pop("name")
+                if res["source"] == "usda":
+                    del res["source"]
+                    return res
+                if res["source"] == "uhtt":
+                    del res["source"]
+                    return res
+            del lr[0]["source"]
+            return lr[0]
+        raise HTTPException(status_code=404, detail="No entries found.")
