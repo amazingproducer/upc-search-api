@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.9
 from fastapi import FastAPI, Path, HTTPException, Body
-from starlette.responses import RedirectResponse
+from starlette.responses import JSONResponse, RedirectResponse
 import databases
 from sqlalchemy import ARRAY, CheckConstraint, Column, Date, Enum, Index, Integer, Numeric, String, Text, UniqueConstraint, text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -60,6 +60,9 @@ class DataSource(str, En):
     UHTT = "uhtt"
     OpenFoodFacts = "off"
 
+class UPCNotFoundException(Exception):
+    def __init__(self, barcode: str):
+        self.barcode = barcode
 
 api = FastAPI()
 #api = FastAPI(openapi_url="/api/v2/openapi.json", docs_url="/api/v2/docs")
@@ -96,6 +99,16 @@ async def db_connect():
 async def db_disconnect():
     await database.disconnect()
 
+@api.exception_handler(UPCNotFoundException)
+async def UPCNotFound_exception_handler(request: Request, exc: UPCNotFoundException):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "upc":barcode,
+            "error":"no entry found."
+        }
+    )
+
 @api.get('/', include_in_schema = False)
 def root():
 #    response = RedirectResponse(url='/api/v2/docs')
@@ -124,7 +137,7 @@ async def get_name_by_barcode(source:Optional[DataSource] = None, barcode: str =
                 r["upc"] = barcode
                 r["source"] = get_source_name(r["source"])
             return res
-        raise HTTPException(status_code=404, error="Entry not found.", upc=barcode)
+        raise UPCNotFoundException(barcode=barcode)
 
 @api.get("/grocy/{barcode}")
 async def get_grocy_data_by_barcode(barcode:str=Path(..., min_length= 12, max_length=14, regex=r"^\d+$")):
@@ -158,4 +171,4 @@ async def get_grocy_data_by_barcode(barcode:str=Path(..., min_length= 12, max_le
                     return res
             del lr[0]["source"]
             return lr[0]
-        raise HTTPException(status_code=404, error="No entries found.", upc=barcode)
+        raise UPCNotFoundException(barcode=barcode)
