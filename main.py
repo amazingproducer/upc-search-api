@@ -124,7 +124,7 @@ async def get_name_by_barcode(source:Optional[DataSource] = None, barcode: str =
                 r["upc"] = barcode
                 r["source"] = get_source_name(r["source"])
             return res
-        raise HTTPException(status_code=404, detail="Entry not found.")
+        raise HTTPException(status_code=404, error="Entry not found.", upc=barcode)
 
 @api.get("/grocy/{barcode}")
 async def get_grocy_data_by_barcode(barcode:str=Path(..., min_length= 12, max_length=14, regex=r"^\d+$")):
@@ -158,4 +158,4 @@ async def get_grocy_data_by_barcode(barcode:str=Path(..., min_length= 12, max_le
                     return res
             del lr[0]["source"]
             return lr[0]
-        raise HTTPException(status_code=404, detail="No entries found.")
+        raise HTTPException(status_code=404, error="No entries found.", upc=barcode)
