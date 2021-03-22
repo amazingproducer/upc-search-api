@@ -104,7 +104,7 @@ async def UPCNotFound_exception_handler(request: Request, exc: UPCNotFoundExcept
     return JSONResponse(
         status_code=404,
         content={
-            "upc":barcode,
+            "upc":exc.barcode,
             "error":"no entry found."
         }
     )
