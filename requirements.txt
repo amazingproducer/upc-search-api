@@ -1,2 +1,4 @@
-flask
-Flask-PyMongo
+SQLAlchemy
+psycopg2
+fastapi
+requests
