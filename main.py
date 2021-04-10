@@ -170,5 +170,5 @@ async def get_grocy_data_by_barcode(barcode:str=Path(..., min_length= 12, max_le
                     del res["source"]
                     return res
             del lr[0]["source"]
-            return lr[0]
+            return {"product_name":lr[0]["product_name"]}
         raise UPCNotFoundException(barcode=barcode)
